@@ -226,6 +226,14 @@ class BaseWifiSim():
         }
         return json.dumps(report_msg)
 
+
+    def new_alarm_report(self, attrDict):
+        report_msg = {
+            "method": "alarm",
+            "attribute": attrDict
+        }
+        return json.dumps(report_msg)
+
     @need_add_lock(alarm_lock)
     def add_alarm(self, error_code, error_status, error_level=1, error_msg="test alarm"):
         if error_code in self.alarm_dict and self.alarm_dict[error_code]['status'] != 'over':

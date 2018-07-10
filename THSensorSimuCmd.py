@@ -21,6 +21,12 @@ class THSensorCmd(BasicCmd):
         self.sim_obj = eval(self.device_type)(logger, mac=self.mac, addr=rout_addr)
         self.do_start()
 
+    def help_al_lb(self):
+        self.cprint.notice_p("low_battery alarm")
+
+    def do_al_lb(self,arg):
+        self.sim_obj.lb_alarm()
+
 
 
 class THSensor(BaseWifiSim):
@@ -34,7 +40,11 @@ class THSensor(BaseWifiSim):
         # state data:
         self._humidity = 3000
         self._temperature = 188
+        self.alDict = {"low_battery": "on"}
 
+    def lb_alarm(self):
+        msg = self.new_alarm_report(self.alDict)
+        self.send_msg(msg)
 
     def get_event_report(self):
         report_msg = {
