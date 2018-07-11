@@ -22,10 +22,10 @@ class THSensorCmd(BasicCmd):
         self.do_start()
 
     def help_al_lb(self):
-        self.cprint.notice_p("low_battery alarm")
+        self.cprint.notice_p("low_battery alarm:al_lb [on/off]")
 
     def do_al_lb(self,arg):
-        self.sim_obj.lb_alarm()
+        self.sim_obj.lb_alarm(arg)
 
 
 
@@ -42,7 +42,8 @@ class THSensor(BaseWifiSim):
         self._temperature = 188
         self.alDict = {"low_battery": "on"}
 
-    def lb_alarm(self):
+    def lb_alarm(self,arg):
+        self.alDict["low_battery"] = arg
         msg = self.new_alarm_report(self.alDict)
         self.send_msg(msg)
 
