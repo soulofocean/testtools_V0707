@@ -102,6 +102,6 @@ if __name__ == '__main__':
     LOG = MyLogger(os.path.abspath(sys.argv[0]).replace('py', 'log'), clevel=logging.DEBUG,
                    rlevel=logging.WARN)
     cprint = cprint(__name__)
-    airQD_cmd = AirQDCmd(logger=LOG, cprint=cprint)
-    cprint.yinfo_p("start simu mac [%s]" % (airQD_cmd.mac,))
-    airQD_cmd.cmdloop()
+    airQDcmd = AirQDCmd(logger=LOG, cprint=cprint)
+    cprint.yinfo_p("start simu mac [%s]" % (airQDcmd.mac,))
+    airQDcmd.cmdloop()
