@@ -9,6 +9,7 @@ import serial
 import socket
 import select
 from BasicCommon import *
+import serial.tools.list_ports
 
 class MySerial():
     def __init__(self, port=None, baudrate=9600, logger=None, user='root', password='hdiotwzb100'):

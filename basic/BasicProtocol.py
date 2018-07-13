@@ -59,7 +59,7 @@ class communication_base(object):
             th.start()
 
     @abstractmethod
-    def msg_build(self):
+    def msg_build(self, data):
         pass
 
     @abstractmethod
@@ -81,7 +81,7 @@ class communication_base(object):
         pass
 
     @abstractmethod
-    def recv_data(self, data):
+    def recv_data(self):
         pass
 
     @need_add_lock(send_lock)
@@ -627,6 +627,7 @@ class ZIGBEE(communication_base):
             ret_str += '\n'
         ret_str += '}'
         return ret_str
+
 
 
 if __name__ == '__main__':
