@@ -332,6 +332,7 @@ class Task():
             self.LOG = MyLogger(name + '.log', clevel=logging.DEBUG)
         self.need_stop = False
 
+
     def stop(self):
         self.need_stop = True
         self.LOG.warn('Thread %s stoped!' % (__name__))
@@ -417,5 +418,39 @@ class Task():
             except RuntimeError:
                 pass
 
+
 if __name__ == '__main__':
-    pass
+    lk = threading.RLock()
+    def add_T(func, runtime=1, interval=2, *args):
+        for i in range(0, runtime):
+            lk.acquire()
+            if callable(func):
+                func(*(args))
+            elif callable(eval(func)):
+                eval(func + '(*' + str(args) + ')')
+            else:
+                print "error"
+            lk.release()
+            time.sleep(interval)
+    def show(arg):
+        print(("%s begin") % (arg,))
+        #time.sleep(2)
+        print(("%s end") % (arg,))
+    task_sche = Task()
+    threading.Thread(target=add_T, args=(show, 4, 1, 'hello world' )).start()
+    threading.Thread(target=add_T, args=(show, 4, 1, 'hello world2')).start()
+    threading.Thread(target=add_T, args=(show, 4, 1, 'hello world3')).start()
+    #task_sche.add_task('task test', 'show', 3, 5, 'hello world')
+    #task_sche.add_task('task test2', show, 4, 2, 'go to die')
+    #task_sche.add_task('show task', task_sche.show_tasks, 5, 2)
+    #ttt = threading.Thread(target=task_sche.task_proc)
+    #ttt.setDaemon(True)
+    #ttt.start()
+    #time.sleep(10)
+    #task_sche.add_task('task test', 'show', 3, 5, 'hello world2')
+    #for i in range(0,3):
+        #ts.append(threading.Thread(target=add_T,args=(show, 4, 1, 'hello world'+str(i))))
+
+
+
+    raw_input("Press any key to continue...")
