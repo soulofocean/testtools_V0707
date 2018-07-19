@@ -14,7 +14,7 @@ class CurtainCmd(BasicCmd):
     def __init__(self, logger, cprint):
         self.air_version = "20180703"
         self.mac = str(hex(int(time.time())))[-8:]
-        self.device_type = "Curtain"
+        self.device_type = "Switch"
         BasicCmd.__init__(self, logger=logger, cprint=cprint, version=self.air_version, d_type=self.device_type)
 
 
