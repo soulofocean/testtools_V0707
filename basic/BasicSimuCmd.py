@@ -1139,5 +1139,1195 @@ class Switch(BaseZigbeeSim):
 
         else:
             pass
+
+class Tube_lamp(BaseZigbeeSim):
+    def __init__(self, logger, mac=b'123456', short_id=b'\x11\x11', Endpoint=b'\x01'):
+        super(Tube_lamp, self).__init__(logger=logger)
+        self.LOG = logger
+        self.sdk_obj = None
+        self.need_stop = False
+
+        # state data:
+        self._Switch = b'\x00\x00'
+        self._Hue = b''
+        self.Saturation = b''
+        self._Color_X = b'\x66\x2d'
+        self._Color_Y = b'\xdf\x5c'
+        self._Color_Temperature = b'\xdd\x00'
+        self._Level = b'\x00\x00'
+        self._Window_covering = b''
+        self.Percentage_Lift_Value = b''
+        self.Short_id = short_id
+        self.Endpoint = Endpoint
+        self.mac = str(mac) + b'\x00' * (8 - len(str(mac)))
+        self.Capability = b'\x05'
+        self.seq = b'\x01'
+        self.cmd = b''
+        self.addr = b''
+
+    def get_cmd(self, cmd):
+        cmds = {
+            'Device Announce': {
+                'cmd': b'\x40\x13\x00\x00\x00',
+                'data': self.Short_id + self.mac + self.Capability,
+            },
+
+            'Active Endpoint Response': {
+                'cmd': b'\x40\x05\x80\x00\x00',
+                'data': b'\x00' + self.Short_id + b'\x01' + self.Endpoint,
+            },
+
+            'Leave response': {
+                'cmd': b'\x40\x34\x80\x01\x00',
+                'data': b'\x00',
+            },
+
+            'Read attribute response': {
+                b'\x00\x00': {
+                    'cmd': b'\x01\x00\x00\x04\x00',
+                    #'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_Dimmable_downlight',
+                    #'data': b'\x00' + b'\x42' + b'\x03' + 'LDS' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x0e' + 'ZHA-ColorLight',
+                    'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_Dimmable_downlight_7W',
+                },
+
+                b'\x06\x00': {
+                    'cmd': b'\x01\x06\x00\x00\x00',
+                    'data': b'\x00' + b'\x10' + b'\x01' + self._Switch[0:0 + 1],
+                },
+
+                b'\x08\x00': {
+                    'cmd': b'\x01\x08\x00\x00\x00',
+                    'data': b'\x00' + b'\x20' + b'\x01' + self._Level[0:0 + 1],
+                },
+
+                b'\x00\x03': {
+                    'cmd': b'\x01\x00\x03' + self.cmd[3:3 + 2],
+                    'data': b'\x00' + b'\x21' + b'\x04' + self._Color_X + self._Color_Y,
+                },
+                'default': {
+                    'cmd': b'\x01\x00\x00\x00\x00',
+                    'data': b'\x00' + b'\x10' + b'\x01\x00',
+                },
+            },
+
+            'Bind response': {
+                'cmd': b'\x40\x21\x80\x00\x00',
+                'data': b'\x00',
+            },
+
+            'Configure reporting response': {
+                b'\x06\x00': {
+                    'cmd': b'\x07\x06\x00\x00\x00',
+                    'data': b'\x00\x00\x00\x00',
+                },
+
+                b'\x08\x00': {
+                    'cmd': b'\x07\x08\x00\x00\x00',
+                    'data': b'\x00\x00\x00\x00',
+                },
+
+                b'\x00\x03': {
+                    'cmd': b'\x07\x00\x03' + self.cmd[3:3 + 2],
+                    'data': b'\x00\x00\x00\x00',
+                },
+
+                'default': {
+                    'cmd': b'\x07\x00\x00\x00\x00',
+                    'data': b'\x00\x00\x00\x00',
+                },
+            },
+        }
+        return cmds.get(cmd, None)
+
+    def protocol_handler(self, datas, ack=False):
+        need_ASP_response = False
+        need_default_response = False
+        rsp_datas = {
+            'control': datas['control'],
+            'seq': datas['seq'],
+            'addr': datas['addr'],
+            'cmd': b'\x0B' + datas['cmd'][1:],
+            'reserve': datas['reserve'],
+            'data': b'\x81',
+        }
+        if bit_get(datas['control'], 7):
+            self.LOG.debug('ACK msg!')
+            return
+        else:
+            self.LOG.info("recv msg: " + self.convert_to_dictstr(datas))
+            self.send_msg(self.get_default_response(datas))
+            self.set_seq(datas['seq'])
+            self.addr = datas['addr']
+            self.cmd = datas['cmd']
+
+        req_cmd_type = datas['cmd'][0:0 + 1]
+        req_cmd_domain = datas['cmd'][1:1 + 2]
+        req_cmd_word = datas['cmd'][3:3 + 2]
+
+        if datas['cmd'][:1] == b'\x40':
+            if datas['cmd'][1:] == b'\x36\x00\x00\x00':
+                rsp_data = self.get_cmd('Device Announce')
+                if rsp_data:
+                    rsp_datas['control'] = datas['control']
+                    rsp_datas['cmd'] = rsp_data['cmd']
+                    rsp_datas['data'] = rsp_data['data']
+                else:
+                    pass
+
+            elif datas['cmd'][1:] == b'\x05\x00\x00\x00':
+                self.Endpoint = b'\x01'
+                rsp_data = self.get_cmd('Active Endpoint Response')
+                #self.set_item('Short_id', datas['data'])
+                if rsp_data:
+                    rsp_datas['cmd'] = rsp_data['cmd']
+                    rsp_datas['data'] = rsp_data['data']
+                else:
+                    pass
+
+            elif datas['cmd'][1:] == b'\x34\x00\x01\x00':
+                self.sdk_obj.set_work_status(False)
+                rsp_data = self.get_cmd('Leave response')
+                if rsp_data:
+                    rsp_datas['cmd'] = rsp_data['cmd']
+                    rsp_datas['data'] = rsp_data['data']
+                else:
+                    pass
+
+            elif datas['cmd'][1:] == b'\x21\x00\x00\x00':
+                #self.set_item('mac', datas['data'][0:0 + 8])
+                #self.set_item('endpoint', datas['data'][8:8 + 1])
+                #self.set_item('Short_id', datas['data'][9:9 + 2])
+                rsp_data = self.get_cmd('Bind response')
+                if rsp_data:
+                    rsp_datas['cmd'] = rsp_data['cmd']
+                    rsp_datas['data'] = rsp_data['data']
+                else:
+                    pass
+
+            else:
+                self.LOG.error(protocol_data_printB(
+                    datas['cmd'][1:], title='Unknow cmd:'))
+
+        elif datas['cmd'][:1] == b'\x41':
+            if datas['cmd'][1:1 + 2] == b'\x06\x00':
+                if datas['cmd'][3:3 + 2] == b'\x00\x00':
+                    self.set_item('_Switch', b'\x00')
+                elif datas['cmd'][3:3 + 2] == b'\x01\x00':
+                    self.set_item('_Switch', b'\x01')
+                else:
+                    self.set_item('_Switch', b'\x02')
+
+            elif datas['cmd'][1:1 + 2] == b'\x00\x03':
+                if datas['cmd'][3:3 + 2] == b'\x06\x00':
+                    self.set_item('_Hue', datas['data'][0:0 + 1])
+                    self.set_item('Saturation', datas['data'][1:1 + 1])
+
+                elif datas['cmd'][3:3 + 2] == b'\x07\x00':
+                    self.set_item('_Color_X', datas['data'][0:0 + 2])
+                    self.set_item('_Color_Y', datas['data'][2:2 + 2])
+
+                elif datas['cmd'][3:3 + 2] == b'\x0a\x00':
+                    self.set_item('_Color_Temperature', datas['data'][0:0 + 2])
+
+                else:
+                    self.LOG.error(protocol_data_printB(
+                        datas['cmd'][3:3 + 2], title='Unknow cmd:'))
+
+            elif datas['cmd'][1:1 + 2] == b'\x08\x00':
+                self.set_item('_Level', datas['data'][0:0 + 1])
+
+            elif datas['cmd'][1:1 + 2] == b'\x02\x01':
+                if datas['cmd'][3:3 + 2] == b'\x00\x00':
+                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
+
+                elif datas['cmd'][3:3 + 2] == b'\x01\x00':
+                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
+
+                elif datas['cmd'][3:3 + 2] == b'\x02\x00':
+                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
+
+                elif datas['cmd'][3:3 + 2] == b'\x05\x00':
+                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
+                    self.set_item('Percentage_Lift_Value',
+                                  datas['data'][0:0 + 1])
+
+                else:
+                    self.LOG.error(protocol_data_printB(
+                        datas['cmd'][3:3 + 2], title='Unknow cmd:'))
+
+            else:
+                self.LOG.error(protocol_data_printB(
+                    datas['cmd'][1:1 + 2], title='Unknow cmd:'))
+
+            return
+
+        elif datas['cmd'][:1] == b'\x00':
+            rsp_data = self.get_cmd('Read attribute response')
+            if rsp_data:
+                if datas['cmd'][1:1 + 2] == b'\x00\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x00\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x00\x00']['data']
+
+                elif datas['cmd'][1:1 + 2] == b'\x06\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x06\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x06\x00']['data']
+
+                elif datas['cmd'][1:1 + 2] == b'\x08\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x08\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x08\x00']['data']
+                #add by -zx for cmd:00 00 03 03 00 and 00 00 03 04 00
+                elif datas['cmd'][1:1 + 2] == b'\x00\x03':
+                    rsp_datas['cmd'] = rsp_data[b'\x00\x03']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x00\x03']['data']
+
+                else:
+                    self.LOG.error("Fuck Read attribute response")
+                    rsp_datas['cmd'] = rsp_data['default']['cmd']
+                    rsp_datas['data'] = rsp_data['default']['data']
+
+            else:
+                pass
+
+        elif datas['cmd'][:1] == b'\x06':
+            self.sdk_obj.set_work_status(False)
+            rsp_data = self.get_cmd('Configure reporting response')
+            if rsp_data:
+                if datas['cmd'][1:1 + 2] == b'\x06\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x06\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x06\x00']['data']
+
+                elif datas['cmd'][1:1 + 2] == b'\x08\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x08\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x08\x00']['data']
+
+                elif datas['cmd'][1:1 + 2] == b'\x00\x03':
+                    rsp_datas['cmd'] = rsp_data[b'\x00\x03']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x00\x03']['data']
+
+                else:
+                    rsp_datas['cmd'] = rsp_data['default']['cmd']
+                    rsp_datas['data'] = rsp_data['default']['data']
+
+            else:
+                pass
+
+        else:
+            self.LOG.error("What is the fuck msg?")
+            return
+
+        self.LOG.yinfo("send msg: " + self.convert_to_dictstr(rsp_datas))
+        return rsp_datas
+
+    def event_report_proc(self, req_cmd_word):
+        if req_cmd_word == '_Switch':
+            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x06\x00' + b'\x00\x00', data=b'\x10' + self._Switch))
+
+        elif req_cmd_word == '_Color_Temperature' or req_cmd_word == '_Color_X':
+            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x00\x03' + b'\x04\x00',
+                                                       data=b'\x21' + self._Color_Y + b'\x03\x00' +
+                                                       b'\x21' + self._Color_X + b'\x07\x00' +
+                                                       b'\x21' + self._Color_Temperature))
+
+        elif req_cmd_word == '_Level':
+            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x08\x00' + b'\x00\x00', data=b'\x20' + self._Level))
+
+        elif req_cmd_word == '_Window_covering':
+            pass
+
+        else:
+            pass
+
+class Shoot_lamp(BaseZigbeeSim):
+    def __init__(self, logger, mac=b'123456', short_id=b'\x11\x11', Endpoint=b'\x01'):
+        super(Shoot_lamp, self).__init__(logger=logger)
+        self.LOG = logger
+        self.sdk_obj = None
+        self.need_stop = False
+
+        # state data:
+        self._Switch = b'\x00\x00'
+        self._Hue = b''
+        self.Saturation = b''
+        self._Color_X = b'\x66\x2d'
+        self._Color_Y = b'\xdf\x5c'
+        self._Color_Temperature = b'\xdd\x00'
+        self._Level = b'\x00\x00'
+        self._Window_covering = b''
+        self.Percentage_Lift_Value = b''
+        self.Short_id = short_id
+        self.Endpoint = Endpoint
+        self.mac = str(mac) + b'\x00' * (8 - len(str(mac)))
+        self.Capability = b'\x05'
+        self.seq = b'\x01'
+        self.cmd = b''
+        self.addr = b''
+
+    def get_cmd(self, cmd):
+        cmds = {
+            'Device Announce': {
+                'cmd': b'\x40\x13\x00\x00\x00',
+                'data': self.Short_id + self.mac + self.Capability,
+            },
+
+            'Active Endpoint Response': {
+                'cmd': b'\x40\x05\x80\x00\x00',
+                'data': b'\x00' + self.Short_id + b'\x01' + self.Endpoint,
+            },
+
+            'Leave response': {
+                'cmd': b'\x40\x34\x80\x01\x00',
+                'data': b'\x00',
+            },
+
+            'Read attribute response': {
+                b'\x00\x00': {
+                    'cmd': b'\x01\x00\x00\x04\x00',
+                    #'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_Dimmable_downlight',
+                    #'data': b'\x00' + b'\x42' + b'\x03' + 'LDS' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x0e' + 'ZHA-ColorLight',
+                    'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_Dimmable_spotlight_10W',
+                },
+
+                b'\x06\x00': {
+                    'cmd': b'\x01\x06\x00\x00\x00',
+                    'data': b'\x00' + b'\x10' + b'\x01' + self._Switch[0:0 + 1],
+                },
+
+                b'\x08\x00': {
+                    'cmd': b'\x01\x08\x00\x00\x00',
+                    'data': b'\x00' + b'\x20' + b'\x01' + self._Level[0:0 + 1],
+                },
+
+                b'\x00\x03': {
+                    'cmd': b'\x01\x00\x03' + self.cmd[3:3 + 2],
+                    'data': b'\x00' + b'\x21' + b'\x04' + self._Color_X + self._Color_Y,
+                },
+                'default': {
+                    'cmd': b'\x01\x00\x00\x00\x00',
+                    'data': b'\x00' + b'\x10' + b'\x01\x00',
+                },
+            },
+
+            'Bind response': {
+                'cmd': b'\x40\x21\x80\x00\x00',
+                'data': b'\x00',
+            },
+
+            'Configure reporting response': {
+                b'\x06\x00': {
+                    'cmd': b'\x07\x06\x00\x00\x00',
+                    'data': b'\x00\x00\x00\x00',
+                },
+
+                b'\x08\x00': {
+                    'cmd': b'\x07\x08\x00\x00\x00',
+                    'data': b'\x00\x00\x00\x00',
+                },
+
+                b'\x00\x03': {
+                    'cmd': b'\x07\x00\x03' + self.cmd[3:3 + 2],
+                    'data': b'\x00\x00\x00\x00',
+                },
+
+                'default': {
+                    'cmd': b'\x07\x00\x00\x00\x00',
+                    'data': b'\x00\x00\x00\x00',
+                },
+            },
+        }
+        return cmds.get(cmd, None)
+
+    def protocol_handler(self, datas, ack=False):
+        need_ASP_response = False
+        need_default_response = False
+        rsp_datas = {
+            'control': datas['control'],
+            'seq': datas['seq'],
+            'addr': datas['addr'],
+            'cmd': b'\x0B' + datas['cmd'][1:],
+            'reserve': datas['reserve'],
+            'data': b'\x81',
+        }
+        if bit_get(datas['control'], 7):
+            self.LOG.debug('ACK msg!')
+            return
+        else:
+            self.LOG.info("recv msg: " + self.convert_to_dictstr(datas))
+            self.send_msg(self.get_default_response(datas))
+            self.set_seq(datas['seq'])
+            self.addr = datas['addr']
+            self.cmd = datas['cmd']
+
+        req_cmd_type = datas['cmd'][0:0 + 1]
+        req_cmd_domain = datas['cmd'][1:1 + 2]
+        req_cmd_word = datas['cmd'][3:3 + 2]
+
+        if datas['cmd'][:1] == b'\x40':
+            if datas['cmd'][1:] == b'\x36\x00\x00\x00':
+                rsp_data = self.get_cmd('Device Announce')
+                if rsp_data:
+                    rsp_datas['control'] = datas['control']
+                    rsp_datas['cmd'] = rsp_data['cmd']
+                    rsp_datas['data'] = rsp_data['data']
+                else:
+                    pass
+
+            elif datas['cmd'][1:] == b'\x05\x00\x00\x00':
+                self.Endpoint = b'\x01'
+                rsp_data = self.get_cmd('Active Endpoint Response')
+                #self.set_item('Short_id', datas['data'])
+                if rsp_data:
+                    rsp_datas['cmd'] = rsp_data['cmd']
+                    rsp_datas['data'] = rsp_data['data']
+                else:
+                    pass
+
+            elif datas['cmd'][1:] == b'\x34\x00\x01\x00':
+                self.sdk_obj.set_work_status(False)
+                rsp_data = self.get_cmd('Leave response')
+                if rsp_data:
+                    rsp_datas['cmd'] = rsp_data['cmd']
+                    rsp_datas['data'] = rsp_data['data']
+                else:
+                    pass
+
+            elif datas['cmd'][1:] == b'\x21\x00\x00\x00':
+                #self.set_item('mac', datas['data'][0:0 + 8])
+                #self.set_item('endpoint', datas['data'][8:8 + 1])
+                #self.set_item('Short_id', datas['data'][9:9 + 2])
+                rsp_data = self.get_cmd('Bind response')
+                if rsp_data:
+                    rsp_datas['cmd'] = rsp_data['cmd']
+                    rsp_datas['data'] = rsp_data['data']
+                else:
+                    pass
+
+            else:
+                self.LOG.error(protocol_data_printB(
+                    datas['cmd'][1:], title='Unknow cmd:'))
+
+        elif datas['cmd'][:1] == b'\x41':
+            if datas['cmd'][1:1 + 2] == b'\x06\x00':
+                if datas['cmd'][3:3 + 2] == b'\x00\x00':
+                    self.set_item('_Switch', b'\x00')
+                elif datas['cmd'][3:3 + 2] == b'\x01\x00':
+                    self.set_item('_Switch', b'\x01')
+                else:
+                    self.set_item('_Switch', b'\x02')
+
+            elif datas['cmd'][1:1 + 2] == b'\x00\x03':
+                if datas['cmd'][3:3 + 2] == b'\x06\x00':
+                    self.set_item('_Hue', datas['data'][0:0 + 1])
+                    self.set_item('Saturation', datas['data'][1:1 + 1])
+
+                elif datas['cmd'][3:3 + 2] == b'\x07\x00':
+                    self.set_item('_Color_X', datas['data'][0:0 + 2])
+                    self.set_item('_Color_Y', datas['data'][2:2 + 2])
+
+                elif datas['cmd'][3:3 + 2] == b'\x0a\x00':
+                    self.set_item('_Color_Temperature', datas['data'][0:0 + 2])
+
+                else:
+                    self.LOG.error(protocol_data_printB(
+                        datas['cmd'][3:3 + 2], title='Unknow cmd:'))
+
+            elif datas['cmd'][1:1 + 2] == b'\x08\x00':
+                self.set_item('_Level', datas['data'][0:0 + 1])
+
+            elif datas['cmd'][1:1 + 2] == b'\x02\x01':
+                if datas['cmd'][3:3 + 2] == b'\x00\x00':
+                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
+
+                elif datas['cmd'][3:3 + 2] == b'\x01\x00':
+                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
+
+                elif datas['cmd'][3:3 + 2] == b'\x02\x00':
+                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
+
+                elif datas['cmd'][3:3 + 2] == b'\x05\x00':
+                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
+                    self.set_item('Percentage_Lift_Value',
+                                  datas['data'][0:0 + 1])
+
+                else:
+                    self.LOG.error(protocol_data_printB(
+                        datas['cmd'][3:3 + 2], title='Unknow cmd:'))
+
+            else:
+                self.LOG.error(protocol_data_printB(
+                    datas['cmd'][1:1 + 2], title='Unknow cmd:'))
+
+            return
+
+        elif datas['cmd'][:1] == b'\x00':
+            rsp_data = self.get_cmd('Read attribute response')
+            if rsp_data:
+                if datas['cmd'][1:1 + 2] == b'\x00\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x00\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x00\x00']['data']
+
+                elif datas['cmd'][1:1 + 2] == b'\x06\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x06\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x06\x00']['data']
+
+                elif datas['cmd'][1:1 + 2] == b'\x08\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x08\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x08\x00']['data']
+                #add by -zx for cmd:00 00 03 03 00 and 00 00 03 04 00
+                elif datas['cmd'][1:1 + 2] == b'\x00\x03':
+                    rsp_datas['cmd'] = rsp_data[b'\x00\x03']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x00\x03']['data']
+
+                else:
+                    self.LOG.error("Fuck Read attribute response")
+                    rsp_datas['cmd'] = rsp_data['default']['cmd']
+                    rsp_datas['data'] = rsp_data['default']['data']
+
+            else:
+                pass
+
+        elif datas['cmd'][:1] == b'\x06':
+            self.sdk_obj.set_work_status(False)
+            rsp_data = self.get_cmd('Configure reporting response')
+            if rsp_data:
+                if datas['cmd'][1:1 + 2] == b'\x06\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x06\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x06\x00']['data']
+
+                elif datas['cmd'][1:1 + 2] == b'\x08\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x08\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x08\x00']['data']
+
+                elif datas['cmd'][1:1 + 2] == b'\x00\x03':
+                    rsp_datas['cmd'] = rsp_data[b'\x00\x03']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x00\x03']['data']
+
+                else:
+                    rsp_datas['cmd'] = rsp_data['default']['cmd']
+                    rsp_datas['data'] = rsp_data['default']['data']
+
+            else:
+                pass
+
+        else:
+            self.LOG.error("What is the fuck msg?")
+            return
+
+        self.LOG.yinfo("send msg: " + self.convert_to_dictstr(rsp_datas))
+        return rsp_datas
+
+    def event_report_proc(self, req_cmd_word):
+        if req_cmd_word == '_Switch':
+            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x06\x00' + b'\x00\x00', data=b'\x10' + self._Switch))
+
+        elif req_cmd_word == '_Color_Temperature' or req_cmd_word == '_Color_X':
+            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x00\x03' + b'\x04\x00',
+                                                       data=b'\x21' + self._Color_Y + b'\x03\x00' +
+                                                       b'\x21' + self._Color_X + b'\x07\x00' +
+                                                       b'\x21' + self._Color_Temperature))
+
+        elif req_cmd_word == '_Level':
+            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x08\x00' + b'\x00\x00', data=b'\x20' + self._Level))
+
+        elif req_cmd_word == '_Window_covering':
+            pass
+
+        else:
+            pass
+
+class Banded_lamp(BaseZigbeeSim):
+    def __init__(self, logger, mac=b'123456', short_id=b'\x11\x11', Endpoint=b'\x01'):
+        super(Banded_lamp, self).__init__(logger=logger)
+        self.LOG = logger
+        self.sdk_obj = None
+        self.need_stop = False
+
+        # state data:
+        self._Switch = b'\x00\x00'
+        self._Hue = b''
+        self.Saturation = b''
+        self._Color_X = b'\x66\x2d'
+        self._Color_Y = b'\xdf\x5c'
+        self._Color_Temperature = b'\xdd\x00'
+        self._Level = b'\x00\x00'
+        self._Window_covering = b''
+        self.Percentage_Lift_Value = b''
+        self.Short_id = short_id
+        self.Endpoint = Endpoint
+        self.mac = str(mac) + b'\x00' * (8 - len(str(mac)))
+        self.Capability = b'\x05'
+        self.seq = b'\x01'
+        self.cmd = b''
+        self.addr = b''
+
+    def get_cmd(self, cmd):
+        cmds = {
+            'Device Announce': {
+                'cmd': b'\x40\x13\x00\x00\x00',
+                'data': self.Short_id + self.mac + self.Capability,
+            },
+
+            'Active Endpoint Response': {
+                'cmd': b'\x40\x05\x80\x00\x00',
+                'data': b'\x00' + self.Short_id + b'\x01' + self.Endpoint,
+            },
+
+            'Leave response': {
+                'cmd': b'\x40\x34\x80\x01\x00',
+                'data': b'\x00',
+            },
+
+            'Read attribute response': {
+                b'\x00\x00': {
+                    'cmd': b'\x01\x00\x00\x04\x00',
+                    #
+                    #'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_Dimmable_downlight',
+                    #'data': b'\x00' + b'\x42' + b'\x03' + 'LDS' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x0e' + 'ZHA-ColorLight',
+                    'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_RGB_LedStrip',
+                },
+
+                b'\x06\x00': {
+                    'cmd': b'\x01\x06\x00\x00\x00',
+                    'data': b'\x00' + b'\x10' + b'\x01' + self._Switch[0:0 + 1],
+                },
+
+                b'\x08\x00': {
+                    'cmd': b'\x01\x08\x00\x00\x00',
+                    'data': b'\x00' + b'\x20' + b'\x01' + self._Level[0:0 + 1],
+                },
+
+                b'\x00\x03': {
+                    'cmd': b'\x01\x00\x03' + self.cmd[3:3 + 2],
+                    'data': b'\x00' + b'\x21' + b'\x04' + self._Color_X + self._Color_Y,
+                },
+                'default': {
+                    'cmd': b'\x01\x00\x00\x00\x00',
+                    'data': b'\x00' + b'\x10' + b'\x01\x00',
+                },
+            },
+
+            'Bind response': {
+                'cmd': b'\x40\x21\x80\x00\x00',
+                'data': b'\x00',
+            },
+
+            'Configure reporting response': {
+                b'\x06\x00': {
+                    'cmd': b'\x07\x06\x00\x00\x00',
+                    'data': b'\x00\x00\x00\x00',
+                },
+
+                b'\x08\x00': {
+                    'cmd': b'\x07\x08\x00\x00\x00',
+                    'data': b'\x00\x00\x00\x00',
+                },
+
+                b'\x00\x03': {
+                    'cmd': b'\x07\x00\x03' + self.cmd[3:3 + 2],
+                    'data': b'\x00\x00\x00\x00',
+                },
+
+                'default': {
+                    'cmd': b'\x07\x00\x00\x00\x00',
+                    'data': b'\x00\x00\x00\x00',
+                },
+            },
+        }
+        return cmds.get(cmd, None)
+
+    def protocol_handler(self, datas, ack=False):
+        need_ASP_response = False
+        need_default_response = False
+        rsp_datas = {
+            'control': datas['control'],
+            'seq': datas['seq'],
+            'addr': datas['addr'],
+            'cmd': b'\x0B' + datas['cmd'][1:],
+            'reserve': datas['reserve'],
+            'data': b'\x81',
+        }
+        if bit_get(datas['control'], 7):
+            self.LOG.debug('ACK msg!')
+            return
+        else:
+            self.LOG.info("recv msg: " + self.convert_to_dictstr(datas))
+            self.send_msg(self.get_default_response(datas))
+            self.set_seq(datas['seq'])
+            self.addr = datas['addr']
+            self.cmd = datas['cmd']
+
+        req_cmd_type = datas['cmd'][0:0 + 1]
+        req_cmd_domain = datas['cmd'][1:1 + 2]
+        req_cmd_word = datas['cmd'][3:3 + 2]
+
+        if datas['cmd'][:1] == b'\x40':
+            if datas['cmd'][1:] == b'\x36\x00\x00\x00':
+                rsp_data = self.get_cmd('Device Announce')
+                if rsp_data:
+                    rsp_datas['control'] = datas['control']
+                    rsp_datas['cmd'] = rsp_data['cmd']
+                    rsp_datas['data'] = rsp_data['data']
+                else:
+                    pass
+
+            elif datas['cmd'][1:] == b'\x05\x00\x00\x00':
+                self.Endpoint = b'\x01'
+                rsp_data = self.get_cmd('Active Endpoint Response')
+                #self.set_item('Short_id', datas['data'])
+                if rsp_data:
+                    rsp_datas['cmd'] = rsp_data['cmd']
+                    rsp_datas['data'] = rsp_data['data']
+                else:
+                    pass
+
+            elif datas['cmd'][1:] == b'\x34\x00\x01\x00':
+                self.sdk_obj.set_work_status(False)
+                rsp_data = self.get_cmd('Leave response')
+                if rsp_data:
+                    rsp_datas['cmd'] = rsp_data['cmd']
+                    rsp_datas['data'] = rsp_data['data']
+                else:
+                    pass
+
+            elif datas['cmd'][1:] == b'\x21\x00\x00\x00':
+                #self.set_item('mac', datas['data'][0:0 + 8])
+                #self.set_item('endpoint', datas['data'][8:8 + 1])
+                #self.set_item('Short_id', datas['data'][9:9 + 2])
+                rsp_data = self.get_cmd('Bind response')
+                if rsp_data:
+                    rsp_datas['cmd'] = rsp_data['cmd']
+                    rsp_datas['data'] = rsp_data['data']
+                else:
+                    pass
+
+            else:
+                self.LOG.error(protocol_data_printB(
+                    datas['cmd'][1:], title='Unknow cmd:'))
+
+        elif datas['cmd'][:1] == b'\x41':
+            if datas['cmd'][1:1 + 2] == b'\x06\x00':
+                if datas['cmd'][3:3 + 2] == b'\x00\x00':
+                    self.set_item('_Switch', b'\x00')
+                elif datas['cmd'][3:3 + 2] == b'\x01\x00':
+                    self.set_item('_Switch', b'\x01')
+                else:
+                    self.set_item('_Switch', b'\x02')
+
+            elif datas['cmd'][1:1 + 2] == b'\x00\x03':
+                if datas['cmd'][3:3 + 2] == b'\x06\x00':
+                    self.set_item('_Hue', datas['data'][0:0 + 1])
+                    self.set_item('Saturation', datas['data'][1:1 + 1])
+
+                elif datas['cmd'][3:3 + 2] == b'\x07\x00':
+                    self.set_item('_Color_X', datas['data'][0:0 + 2])
+                    self.set_item('_Color_Y', datas['data'][2:2 + 2])
+
+                elif datas['cmd'][3:3 + 2] == b'\x0a\x00':
+                    self.set_item('_Color_Temperature', datas['data'][0:0 + 2])
+
+                else:
+                    self.LOG.error(protocol_data_printB(
+                        datas['cmd'][3:3 + 2], title='Unknow cmd:'))
+
+            elif datas['cmd'][1:1 + 2] == b'\x08\x00':
+                self.set_item('_Level', datas['data'][0:0 + 1])
+
+            elif datas['cmd'][1:1 + 2] == b'\x02\x01':
+                if datas['cmd'][3:3 + 2] == b'\x00\x00':
+                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
+
+                elif datas['cmd'][3:3 + 2] == b'\x01\x00':
+                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
+
+                elif datas['cmd'][3:3 + 2] == b'\x02\x00':
+                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
+
+                elif datas['cmd'][3:3 + 2] == b'\x05\x00':
+                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
+                    self.set_item('Percentage_Lift_Value',
+                                  datas['data'][0:0 + 1])
+
+                else:
+                    self.LOG.error(protocol_data_printB(
+                        datas['cmd'][3:3 + 2], title='Unknow cmd:'))
+
+            else:
+                self.LOG.error(protocol_data_printB(
+                    datas['cmd'][1:1 + 2], title='Unknow cmd:'))
+
+            return
+
+        elif datas['cmd'][:1] == b'\x00':
+            rsp_data = self.get_cmd('Read attribute response')
+            if rsp_data:
+                if datas['cmd'][1:1 + 2] == b'\x00\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x00\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x00\x00']['data']
+
+                elif datas['cmd'][1:1 + 2] == b'\x06\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x06\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x06\x00']['data']
+
+                elif datas['cmd'][1:1 + 2] == b'\x08\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x08\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x08\x00']['data']
+                #add by -zx for cmd:00 00 03 03 00 and 00 00 03 04 00
+                elif datas['cmd'][1:1 + 2] == b'\x00\x03':
+                    rsp_datas['cmd'] = rsp_data[b'\x00\x03']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x00\x03']['data']
+
+                else:
+                    self.LOG.error("Fuck Read attribute response")
+                    rsp_datas['cmd'] = rsp_data['default']['cmd']
+                    rsp_datas['data'] = rsp_data['default']['data']
+
+            else:
+                pass
+
+        elif datas['cmd'][:1] == b'\x06':
+            self.sdk_obj.set_work_status(False)
+            rsp_data = self.get_cmd('Configure reporting response')
+            if rsp_data:
+                if datas['cmd'][1:1 + 2] == b'\x06\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x06\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x06\x00']['data']
+
+                elif datas['cmd'][1:1 + 2] == b'\x08\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x08\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x08\x00']['data']
+
+                elif datas['cmd'][1:1 + 2] == b'\x00\x03':
+                    rsp_datas['cmd'] = rsp_data[b'\x00\x03']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x00\x03']['data']
+
+                else:
+                    rsp_datas['cmd'] = rsp_data['default']['cmd']
+                    rsp_datas['data'] = rsp_data['default']['data']
+
+            else:
+                pass
+
+        else:
+            self.LOG.error("What is the fuck msg?")
+            return
+
+        self.LOG.yinfo("send msg: " + self.convert_to_dictstr(rsp_datas))
+        return rsp_datas
+
+    def event_report_proc(self, req_cmd_word):
+        if req_cmd_word == '_Switch':
+            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x06\x00' + b'\x00\x00', data=b'\x10' + self._Switch))
+
+        elif req_cmd_word == '_Color_Temperature' or req_cmd_word == '_Color_X':
+            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x00\x03' + b'\x04\x00',
+                                                       data=b'\x21' + self._Color_Y + b'\x03\x00' +
+                                                       b'\x21' + self._Color_X + b'\x07\x00' +
+                                                       b'\x21' + self._Color_Temperature))
+
+        elif req_cmd_word == '_Level':
+            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x08\x00' + b'\x00\x00', data=b'\x20' + self._Level))
+
+        elif req_cmd_word == '_Window_covering':
+            pass
+
+        else:
+            pass
+
+class Celling_lamp(BaseZigbeeSim):
+    def __init__(self, logger, mac=b'123456', short_id=b'\x11\x11', Endpoint=b'\x01'):
+        super(Celling_lamp, self).__init__(logger=logger)
+        self.LOG = logger
+        self.sdk_obj = None
+        self.need_stop = False
+
+        # state data:
+        self._Switch = b'\x00\x00'
+        self._Hue = b''
+        self.Saturation = b''
+        self._Color_X = b'\x66\x2d'
+        self._Color_Y = b'\xdf\x5c'
+        self._Color_Temperature = b'\xdd\x00'
+        self._Level = b'\x00\x00'
+        self._Window_covering = b''
+        self.Percentage_Lift_Value = b''
+        self.Short_id = short_id
+        self.Endpoint = Endpoint
+        self.mac = str(mac) + b'\x00' * (8 - len(str(mac)))
+        self.Capability = b'\x05'
+        self.seq = b'\x01'
+        self.cmd = b''
+        self.addr = b''
+
+    def get_cmd(self, cmd):
+        cmds = {
+            'Device Announce': {
+                'cmd': b'\x40\x13\x00\x00\x00',
+                'data': self.Short_id + self.mac + self.Capability,
+            },
+
+            'Active Endpoint Response': {
+                'cmd': b'\x40\x05\x80\x00\x00',
+                'data': b'\x00' + self.Short_id + b'\x01' + self.Endpoint,
+            },
+
+            'Leave response': {
+                'cmd': b'\x40\x34\x80\x01\x00',
+                'data': b'\x00',
+            },
+
+            'Read attribute response': {
+                b'\x00\x00': {
+                    'cmd': b'\x01\x00\x00\x04\x00',
+                    #'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_Dimmable_downlight',
+                    #'data': b'\x00' + b'\x42' + b'\x03' + 'LDS' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x0e' + 'ZHA-ColorLight',
+                    'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_Dimmable_celling_light_28W',
+                },
+
+                b'\x06\x00': {
+                    'cmd': b'\x01\x06\x00\x00\x00',
+                    'data': b'\x00' + b'\x10' + b'\x01' + self._Switch[0:0 + 1],
+                },
+
+                b'\x08\x00': {
+                    'cmd': b'\x01\x08\x00\x00\x00',
+                    'data': b'\x00' + b'\x20' + b'\x01' + self._Level[0:0 + 1],
+                },
+
+                b'\x00\x03': {
+                    'cmd': b'\x01\x00\x03' + self.cmd[3:3 + 2],
+                    'data': b'\x00' + b'\x21' + b'\x04' + self._Color_X + self._Color_Y,
+                },
+                'default': {
+                    'cmd': b'\x01\x00\x00\x00\x00',
+                    'data': b'\x00' + b'\x10' + b'\x01\x00',
+                },
+            },
+
+            'Bind response': {
+                'cmd': b'\x40\x21\x80\x00\x00',
+                'data': b'\x00',
+            },
+
+            'Configure reporting response': {
+                b'\x06\x00': {
+                    'cmd': b'\x07\x06\x00\x00\x00',
+                    'data': b'\x00\x00\x00\x00',
+                },
+
+                b'\x08\x00': {
+                    'cmd': b'\x07\x08\x00\x00\x00',
+                    'data': b'\x00\x00\x00\x00',
+                },
+
+                b'\x00\x03': {
+                    'cmd': b'\x07\x00\x03' + self.cmd[3:3 + 2],
+                    'data': b'\x00\x00\x00\x00',
+                },
+
+                'default': {
+                    'cmd': b'\x07\x00\x00\x00\x00',
+                    'data': b'\x00\x00\x00\x00',
+                },
+            },
+        }
+        return cmds.get(cmd, None)
+
+    def protocol_handler(self, datas, ack=False):
+        need_ASP_response = False
+        need_default_response = False
+        rsp_datas = {
+            'control': datas['control'],
+            'seq': datas['seq'],
+            'addr': datas['addr'],
+            'cmd': b'\x0B' + datas['cmd'][1:],
+            'reserve': datas['reserve'],
+            'data': b'\x81',
+        }
+        if bit_get(datas['control'], 7):
+            self.LOG.debug('ACK msg!')
+            return
+        else:
+            self.LOG.info("recv msg: " + self.convert_to_dictstr(datas))
+            self.send_msg(self.get_default_response(datas))
+            self.set_seq(datas['seq'])
+            self.addr = datas['addr']
+            self.cmd = datas['cmd']
+
+        req_cmd_type = datas['cmd'][0:0 + 1]
+        req_cmd_domain = datas['cmd'][1:1 + 2]
+        req_cmd_word = datas['cmd'][3:3 + 2]
+
+        if datas['cmd'][:1] == b'\x40':
+            if datas['cmd'][1:] == b'\x36\x00\x00\x00':
+                rsp_data = self.get_cmd('Device Announce')
+                if rsp_data:
+                    rsp_datas['control'] = datas['control']
+                    rsp_datas['cmd'] = rsp_data['cmd']
+                    rsp_datas['data'] = rsp_data['data']
+                else:
+                    pass
+
+            elif datas['cmd'][1:] == b'\x05\x00\x00\x00':
+                self.Endpoint = b'\x01'
+                rsp_data = self.get_cmd('Active Endpoint Response')
+                #self.set_item('Short_id', datas['data'])
+                if rsp_data:
+                    rsp_datas['cmd'] = rsp_data['cmd']
+                    rsp_datas['data'] = rsp_data['data']
+                else:
+                    pass
+
+            elif datas['cmd'][1:] == b'\x34\x00\x01\x00':
+                self.sdk_obj.set_work_status(False)
+                rsp_data = self.get_cmd('Leave response')
+                if rsp_data:
+                    rsp_datas['cmd'] = rsp_data['cmd']
+                    rsp_datas['data'] = rsp_data['data']
+                else:
+                    pass
+
+            elif datas['cmd'][1:] == b'\x21\x00\x00\x00':
+                #self.set_item('mac', datas['data'][0:0 + 8])
+                #self.set_item('endpoint', datas['data'][8:8 + 1])
+                #self.set_item('Short_id', datas['data'][9:9 + 2])
+                rsp_data = self.get_cmd('Bind response')
+                if rsp_data:
+                    rsp_datas['cmd'] = rsp_data['cmd']
+                    rsp_datas['data'] = rsp_data['data']
+                else:
+                    pass
+
+            else:
+                self.LOG.error(protocol_data_printB(
+                    datas['cmd'][1:], title='Unknow cmd:'))
+
+        elif datas['cmd'][:1] == b'\x41':
+            if datas['cmd'][1:1 + 2] == b'\x06\x00':
+                if datas['cmd'][3:3 + 2] == b'\x00\x00':
+                    self.set_item('_Switch', b'\x00')
+                elif datas['cmd'][3:3 + 2] == b'\x01\x00':
+                    self.set_item('_Switch', b'\x01')
+                else:
+                    self.set_item('_Switch', b'\x02')
+
+            elif datas['cmd'][1:1 + 2] == b'\x00\x03':
+                if datas['cmd'][3:3 + 2] == b'\x06\x00':
+                    self.set_item('_Hue', datas['data'][0:0 + 1])
+                    self.set_item('Saturation', datas['data'][1:1 + 1])
+
+                elif datas['cmd'][3:3 + 2] == b'\x07\x00':
+                    self.set_item('_Color_X', datas['data'][0:0 + 2])
+                    self.set_item('_Color_Y', datas['data'][2:2 + 2])
+
+                elif datas['cmd'][3:3 + 2] == b'\x0a\x00':
+                    self.set_item('_Color_Temperature', datas['data'][0:0 + 2])
+
+                else:
+                    self.LOG.error(protocol_data_printB(
+                        datas['cmd'][3:3 + 2], title='Unknow cmd:'))
+
+            elif datas['cmd'][1:1 + 2] == b'\x08\x00':
+                self.set_item('_Level', datas['data'][0:0 + 1])
+
+            elif datas['cmd'][1:1 + 2] == b'\x02\x01':
+                if datas['cmd'][3:3 + 2] == b'\x00\x00':
+                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
+
+                elif datas['cmd'][3:3 + 2] == b'\x01\x00':
+                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
+
+                elif datas['cmd'][3:3 + 2] == b'\x02\x00':
+                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
+
+                elif datas['cmd'][3:3 + 2] == b'\x05\x00':
+                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
+                    self.set_item('Percentage_Lift_Value',
+                                  datas['data'][0:0 + 1])
+
+                else:
+                    self.LOG.error(protocol_data_printB(
+                        datas['cmd'][3:3 + 2], title='Unknow cmd:'))
+
+            else:
+                self.LOG.error(protocol_data_printB(
+                    datas['cmd'][1:1 + 2], title='Unknow cmd:'))
+
+            return
+
+        elif datas['cmd'][:1] == b'\x00':
+            rsp_data = self.get_cmd('Read attribute response')
+            if rsp_data:
+                if datas['cmd'][1:1 + 2] == b'\x00\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x00\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x00\x00']['data']
+
+                elif datas['cmd'][1:1 + 2] == b'\x06\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x06\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x06\x00']['data']
+
+                elif datas['cmd'][1:1 + 2] == b'\x08\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x08\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x08\x00']['data']
+                #add by -zx for cmd:00 00 03 03 00 and 00 00 03 04 00
+                elif datas['cmd'][1:1 + 2] == b'\x00\x03':
+                    rsp_datas['cmd'] = rsp_data[b'\x00\x03']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x00\x03']['data']
+
+                else:
+                    self.LOG.error("Fuck Read attribute response")
+                    rsp_datas['cmd'] = rsp_data['default']['cmd']
+                    rsp_datas['data'] = rsp_data['default']['data']
+
+            else:
+                pass
+
+        elif datas['cmd'][:1] == b'\x06':
+            self.sdk_obj.set_work_status(False)
+            rsp_data = self.get_cmd('Configure reporting response')
+            if rsp_data:
+                if datas['cmd'][1:1 + 2] == b'\x06\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x06\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x06\x00']['data']
+
+                elif datas['cmd'][1:1 + 2] == b'\x08\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x08\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x08\x00']['data']
+
+                elif datas['cmd'][1:1 + 2] == b'\x00\x03':
+                    rsp_datas['cmd'] = rsp_data[b'\x00\x03']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x00\x03']['data']
+
+                else:
+                    rsp_datas['cmd'] = rsp_data['default']['cmd']
+                    rsp_datas['data'] = rsp_data['default']['data']
+
+            else:
+                pass
+
+        else:
+            self.LOG.error("What is the fuck msg?")
+            return
+
+        self.LOG.yinfo("send msg: " + self.convert_to_dictstr(rsp_datas))
+        return rsp_datas
+
+    def event_report_proc(self, req_cmd_word):
+        if req_cmd_word == '_Switch':
+            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x06\x00' + b'\x00\x00', data=b'\x10' + self._Switch))
+
+        elif req_cmd_word == '_Color_Temperature' or req_cmd_word == '_Color_X':
+            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x00\x03' + b'\x04\x00',
+                                                       data=b'\x21' + self._Color_Y + b'\x03\x00' +
+                                                       b'\x21' + self._Color_X + b'\x07\x00' +
+                                                       b'\x21' + self._Color_Temperature))
+
+        elif req_cmd_word == '_Level':
+            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x08\x00' + b'\x00\x00', data=b'\x20' + self._Level))
+
+        elif req_cmd_word == '_Window_covering':
+            pass
+
+        else:
+            pass
+
 if __name__ == '__main__':
     pass
