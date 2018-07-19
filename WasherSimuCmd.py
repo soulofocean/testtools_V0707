@@ -182,6 +182,13 @@ class Washer(BaseWifiSim):
                               msg['params']["attribute"]["reserve_wash"])
                 return self.dm_set_rsp(msg['req_id'])
 
+            elif msg['nodeid'] == u"wash_machine.main.switch":
+                self.LOG.warn(
+                    ("开关机: %s" % (msg['params']["attribute"]["switch"])).encode(coding))
+                self.set_item('_switch',
+                              msg['params']["attribute"]["switch"])
+                return self.dm_set_rsp(msg['req_id'])
+
             elif msg['nodeid'] == u"wifi.main.alarm_confirm":
                 return self.alarm_confirm_rsp(msg['req_id'], msg['params']["attribute"]["error_code"])
 
@@ -196,6 +203,6 @@ if __name__ == '__main__':
     LOG = MyLogger(os.path.abspath(sys.argv[0]).replace('py', 'log'), clevel=logging.DEBUG,
                    rlevel=logging.WARN)
     cprint = cprint(__name__)
-    airCmd = WasherCmd(logger=LOG, cprint=cprint)
-    cprint.yinfo_p("start simu mac [%s]" % (airCmd.mac,))
-    airCmd.cmdloop()
+    washerCmd = WasherCmd(logger=LOG, cprint=cprint)
+    cprint.yinfo_p("start simu mac [%s]" % (washerCmd.mac,))
+    washerCmd.cmdloop()
