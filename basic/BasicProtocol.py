@@ -524,6 +524,7 @@ class ZIGBEE(communication_base):
                     mac = ''.join(random.sample('0123456789abcdef', 3))
                     short_id = chr(random.randint(0, 255)) + \
                                chr(random.randint(0, 255))
+                    short_id = chr(65) + chr(65)
                     Endpoint = b'\x00'
                     dst_addr = short_id + Endpoint
                     self.devices[dst_addr] = self.factory(
@@ -531,8 +532,8 @@ class ZIGBEE(communication_base):
                     self.devices[dst_addr].sdk_obj = self
                     self.devices[dst_addr].run_forever()
                     self.devices[short_id + b'\x01'] = self.devices[dst_addr]
-                    self.LOG.warn("It is time to create a new zigbee device, type: %s, mac: %s" % (
-                        self.factory.__name__, mac))
+                    self.LOG.warn("It is time to create a new zigbee device, type: %s, mac: %s, dst_addr: 0x%s" % (
+                        self.factory.__name__, mac, binascii.hexlify(dst_addr)))
                 else:
                     self.LOG.error("Factory busy!")
                     data_length = length - 16
