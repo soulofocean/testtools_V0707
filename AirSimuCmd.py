@@ -113,7 +113,20 @@ class Air(BaseWifiSim):
             "speed": 'low',
             "wind_up_down": 'off',
             "wind_left_right": 'off',
-            "env_temperature": 205
+            "env_temperature": 205,
+            "powersave_mode": 'off',
+            "sleep_mode": 'off',
+            "comfort_mode": 'off',
+            "enforce_mode": 'off',
+            "clean_mode": 'off',
+            "health_mode": 'off',
+            "quiet_mode": 'off',
+            "natural_mode": 'off',
+            "auxiliary_heating_mode": 'off',
+            "indicator_light": 'off',
+            "scene_light": 'off',
+            "timer_switch": 'off',
+            "time_value": 1
         }
         self.initAttrAndDict(initDict=False)
 
@@ -222,6 +235,93 @@ class Air(BaseWifiSim):
                 self.set_item('_wind_left_right',
                               msg['params']["attribute"]["wind_left_right"])
                 return self.dm_set_rsp(msg['req_id'])
+
+            elif msg['nodeid'] == u"airconditioner.main.powersave_mode":
+                self.LOG.warn(
+                    ("省电模式: %s" % (msg['params']["attribute"]["powersave_mode"])).encode(coding))
+                self.set_item('_powersave_mode',
+                              msg['params']["attribute"]["powersave_mode"])
+                return self.dm_set_rsp(msg['req_id'])
+
+            elif msg['nodeid'] == u"airconditioner.main.sleep_mode":
+                self.LOG.warn(
+                    ("睡眠模式: %s" % (msg['params']["attribute"]["sleep_mode"])).encode(coding))
+                self.set_item('_sleep_mode',
+                              msg['params']["attribute"]["sleep_mode"])
+                return self.dm_set_rsp(msg['req_id'])
+
+            elif msg['nodeid'] == u"airconditioner.main.comfort_mode":
+                self.LOG.warn(
+                    ("舒适模式: %s" % (msg['params']["attribute"]["comfort_mode"])).encode(coding))
+                self.set_item('_comfort_mode',
+                              msg['params']["attribute"]["comfort_mode"])
+                return self.dm_set_rsp(msg['req_id'])
+
+            elif msg['nodeid'] == u"airconditioner.main.enforce_mode":
+                self.LOG.warn(
+                    ("增强模式: %s" % (msg['params']["attribute"]["enforce_mode"])).encode(coding))
+                self.set_item('_enforce_mode',
+                              msg['params']["attribute"]["enforce_mode"])
+                return self.dm_set_rsp(msg['req_id'])
+
+            elif msg['nodeid'] == u"airconditioner.main.clean_mode":
+                self.LOG.warn(
+                    ("自清洁模式: %s" % (msg['params']["attribute"]["clean_mode"])).encode(coding))
+                self.set_item('_clean_mode',
+                              msg['params']["attribute"]["clean_mode"])
+                return self.dm_set_rsp(msg['req_id'])
+
+            elif msg['nodeid'] == u"airconditioner.main.health_mode":
+                self.LOG.warn(
+                    ("健康模式: %s" % (msg['params']["attribute"]["health_mode"])).encode(coding))
+                self.set_item('_health_mode',
+                              msg['params']["attribute"]["health_mode"])
+                return self.dm_set_rsp(msg['req_id'])
+
+            elif msg['nodeid'] == u"airconditioner.main.quiet_mode":
+                self.LOG.warn(
+                    ("安静模式: %s" % (msg['params']["attribute"]["quiet_mode"])).encode(coding))
+                self.set_item('_quiet_mode',
+                              msg['params']["attribute"]["quiet_mode"])
+                return self.dm_set_rsp(msg['req_id'])
+
+            elif msg['nodeid'] == u"airconditioner.main.natural_mode":
+                self.LOG.warn(
+                    ("自然风开关: %s" % (msg['params']["attribute"]["natural_mode"])).encode(coding))
+                self.set_item('_natural_mode',
+                              msg['params']["attribute"]["natural_mode"])
+                return self.dm_set_rsp(msg['req_id'])
+
+            elif msg['nodeid'] == u"airconditioner.main.auxiliary_heating_mode":
+                self.LOG.warn(
+                    ("辅热开关: %s" % (msg['params']["attribute"]["auxiliary_heating_mode"])).encode(coding))
+                self.set_item('_auxiliary_heating_mode',
+                              msg['params']["attribute"]["auxiliary_heating_mode"])
+                return self.dm_set_rsp(msg['req_id'])
+
+            elif msg['nodeid'] == u"airconditioner.main.indicator_light":
+                self.LOG.warn(
+                    ("指示灯开关: %s" % (msg['params']["attribute"]["indicator_light"])).encode(coding))
+                self.set_item('_indicator_light',
+                              msg['params']["attribute"]["indicator_light"])
+                return self.dm_set_rsp(msg['req_id'])
+
+            elif msg['nodeid'] == u"airconditioner.main.scene_light":
+                self.LOG.warn(
+                    ("情景灯开关: %s" % (msg['params']["attribute"]["scene_light"])).encode(coding))
+                self.set_item('_scene_light',
+                              msg['params']["attribute"]["scene_light"])
+                return self.dm_set_rsp(msg['req_id'])
+
+            elif msg['nodeid'] == u"airconditioner.main.time":
+                self.LOG.warn(
+                    ("设置倒计时: %s" % (msg['params']["attribute"])).encode(coding))
+                self.set_item('_timer_switch',
+                              msg['params']["attribute"]["timer_switch"])
+                self.set_item('_time_value',
+                              msg['params']["attribute"]["time_value"])
+                return self.dm_set_rsp(msg['req_id'])
+
 
             elif msg['nodeid'] == u"wifi.main.alarm_confirm":
                 return self.alarm_confirm_rsp(msg['req_id'], msg['params']["attribute"]["error_code"])
