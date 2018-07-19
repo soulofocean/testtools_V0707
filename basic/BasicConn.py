@@ -134,6 +134,7 @@ class MySerial():
 class MyClient:
     state_lock = threading.Lock()
     conn_lock = threading.Lock()
+    bind_lock = threading.Lock()
 
     def __init__(self, addr, logger, self_addr=None, debug=True, printB=True):
         self.client = ''
@@ -144,24 +145,33 @@ class MyClient:
         self.debug = debug
         self.printB = printB
         self.binded = False
-        self.BUFF_SIZE = 512
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.BUFF_SIZE = 512
 
+    need_add_lock(state_lock)
     def get_connected(self):
         return self.connected
 
-    @need_add_lock(state_lock)
+    need_add_lock(state_lock)
     def set_connected(self, value):
         self.connected = value
 
-    @need_add_lock(conn_lock)
+    need_add_lock(bind_lock)
+    def get_binded(self):
+        return self.binded
+
+    need_add_lock(bind_lock)
+    def set_binded(self, value):
+        self.binded = value
+
+    need_add_lock(conn_lock)
     def connect(self):
-        if self.self_addr and self.binded == False:
+        if self.self_addr and self.get_binded() == False:
             # self.client.setblocking(False)
-            #self.client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            # self.client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.client.bind(self.self_addr)
             self.LOG.warn("Client bind %s" % str(self.self_addr))
-            self.binded = True
+            self.set_binded(True)
 
         self.inputs = [self.client]
         try:
@@ -170,29 +180,29 @@ class MyClient:
                 self.LOG.info("Connection setup suceess!")
                 self.set_connected(True)
                 return True
-            elif code ==10065:#一般是由于绑定的网卡不可用或者木有连接WIFI
+            elif code == 10065:  # 一般是由于绑定的网卡不可用或者木有连接WIFI
                 self.LOG.error("Connect to server failed [code:%s] wait 10s..." % (code))
-                if self.binded and self.self_addr:
+                if self.get_binded() and self.self_addr:
                     self.LOG.error("May be client bind interface is down binded addr:%s" % str(self.self_addr))
                 time.sleep(10)
                 return False
-            else:#不知道神马情况，遇到再说，先睡一秒
+            else:  # 不知道神马情况，遇到再说，先睡一秒
                 self.LOG.warn("Connect to server failed other code[code:%s]" % (code))
                 time.sleep(1)
                 return False
         except Exception as e:
             self.LOG.warn("Connect to server failed[%s], wait 1s..." % (e))
-            #TODO, these case should handle the socket.error 9 only, add more code here later...
+            # TODO, these case should handle the socket.error 9 only, add more code here later...
             self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # add by zx for add->del->add WIFI sim
-            if(self.binded):#保证Socket绑定的网卡不变
-                self.binded = False
-            #sys.exit()
+            if (self.get_binded()):  # 保证Socket绑定的网卡不变
+                self.set_binded(False)
+            # sys.exit()
             return False
 
     def close(self):
         return self.client.close()
 
-    def recv_once(self, timeout=1):
+    def recv_once(self, timeout=None):
         try:
             if not self.get_connected():
                 return
