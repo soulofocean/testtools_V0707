@@ -21,6 +21,7 @@ class CurtainCmd(BasicCmd):
 
 
 
+
 if __name__ == '__main__':
     LOG = MyLogger("%s.log" % (os.path.basename(sys.argv[0]).split(".")[0],), clevel=logging.INFO,
                    rlevel=logging.WARN)
