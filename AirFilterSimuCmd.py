@@ -197,7 +197,7 @@ class AirFilter(BaseWifiSim):
 
 
 if __name__ == '__main__':
-    LOG = MyLogger(os.path.abspath(sys.argv[0]).replace('py', 'log'), clevel=logging.DEBUG,
+    LOG = MyLogger(os.path.abspath(sys.argv[0]).replace('py', 'log').replace('exe', 'log'), clevel=logging.DEBUG,
                    rlevel=logging.WARN)
     cprint = cprint(__name__)
     airCmd = AirFilterCmd(logger=LOG, cprint=cprint)
