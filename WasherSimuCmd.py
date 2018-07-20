@@ -189,6 +189,20 @@ class Washer(BaseWifiSim):
                               msg['params']["attribute"]["switch"])
                 return self.dm_set_rsp(msg['req_id'])
 
+            elif msg['nodeid'] == u"wash_machine.main.drying":
+                self.LOG.warn(
+                    ("设置烘干: %s" % (msg['params']["attribute"]["drying"])).encode(coding))
+                self.set_item('_drying',
+                              msg['params']["attribute"]["drying"])
+                return self.dm_set_rsp(msg['req_id'])
+
+            elif msg['nodeid'] == u"wash_machine.main.drying_duration":
+                self.LOG.warn(
+                    ("烘干定时: %s" % (msg['params']["attribute"]["drying_duration"])).encode(coding))
+                self.set_item('_drying_duration',
+                              msg['params']["attribute"]["drying_duration"])
+                return self.dm_set_rsp(msg['req_id'])
+
             elif msg['nodeid'] == u"wifi.main.alarm_confirm":
                 return self.alarm_confirm_rsp(msg['req_id'], msg['params']["attribute"]["error_code"])
 
