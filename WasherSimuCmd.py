@@ -9,14 +9,23 @@ import json
 from basic.BasicCommon import *
 from basic.BasicSimuCmd import BasicCmd, BaseWifiSim
 
+if sys.getdefaultencoding() != 'utf-8':
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+coding = sys.getfilesystemencoding()
 # region const variates
-rout_addr = ('192.168.10.1', 65381)
-
+import ConfigParser
+cf = ConfigParser.ConfigParser()
+cf.read('wifi_devices.conf')
+rout_addr = (cf.get('Common','rout_addr'), 65381)
+cl_level = eval(cf.get('Common','cl_level'))
+fl_level = eval(cf.get('Common','fl_level'))
+rm_log = eval(cf.get('Common','rm_log'))
 
 class WasherCmd(BasicCmd):
     def __init__(self, logger, cprint):
         self.air_version = "20180704"
-        self.mac = str(hex(int(time.time())))[-8:]
+        self.mac = get_mac_by_tick()
         self.device_type = "Washer"
         BasicCmd.__init__(self, logger=logger, cprint=cprint, version=self.air_version, d_type=self.device_type)
         self.sim_obj = eval(self.device_type)(logger, mac=self.mac, addr=rout_addr)
@@ -53,19 +62,21 @@ class Washer(BaseWifiSim):
         self._mode = "mix"  #
         self._time_left = 10  #
         self._drying = "no_drying"  #
-        self._operation = "spin"  #
+        self._operation = "none"  #
         self._drying_duration = 15  #
         self._switch = "on"  #
 
     def status_maintain(self):
-        if self._status == 'start':
+        if self._status == 'run':
             if self._time_left > 0:
                 self.set_item('_time_left',
                               self._time_left - 1)
                 if self._time_left <= 0:
-                    self.set_item('_status', 'halt')
+                    self.set_item('_status', 'standby')
+                    self.set_item('_operation', 'finish')
             else:
-                self.set_item('_status', 'halt')
+                self.set_item('_status', 'standby')
+                self.set_item('_operation', 'finish')
 
     def get_event_report(self):
         report_msg = {
@@ -124,8 +135,13 @@ class Washer(BaseWifiSim):
             if msg['nodeid'] == u"wash_machine.main.control":
                 self.LOG.warn(
                     ("启动暂停: %s" % (msg['params']["attribute"]["control"])).encode(coding))
-                self.set_item('_status', msg['params']["attribute"]["control"])
-                self.set_item('_time_left', 10)
+                if(msg['params']["attribute"]["control"] == 'start'):
+                    self.set_item('_status', 'run')
+                    self.set_item('_operation', 'spin')
+                    if(self.get_item("_time_left")==0):
+                        self.set_item('_time_left', 10)
+                if (msg['params']["attribute"]["control"] == 'halt'):
+                    self.set_item('_status', 'standby')
                 return self.dm_set_rsp(msg['req_id'])
 
             elif msg['nodeid'] == u"wash_machine.main.child_lock_switch":
@@ -214,8 +230,10 @@ class Washer(BaseWifiSim):
 
 
 if __name__ == '__main__':
-    LOG = MyLogger(os.path.abspath(sys.argv[0]).replace('py', 'log').replace('exe', 'log'), clevel=logging.DEBUG,
-                   rlevel=logging.WARN)
+    logpath = os.path.abspath(sys.argv[0]).replace('py', 'log').replace('exe', 'log')
+    if rm_log and os.path.isfile(logpath):
+        os.remove(logpath)
+    LOG = MyLogger(logpath, clevel=cl_level, flevel=fl_level)
     cprint = cprint(__name__)
     washerCmd = WasherCmd(logger=LOG, cprint=cprint)
     cprint.yinfo_p("start simu mac [%s]" % (washerCmd.mac,))
