@@ -15,6 +15,8 @@ class CurtainCmd(BasicCmd):
         self.air_version = "20180703"
         self.mac = str(hex(int(time.time())))[-8:]
         self.device_type = "Curtain"
+        self.keylist = None
+        self.watchlist = None
         self.device_addr = None
         BasicCmd.__init__(self, logger=logger, cprint=cprint, version=self.air_version, d_type=self.device_type)
 
@@ -29,14 +31,25 @@ class CurtainCmd(BasicCmd):
         else:
             print zigbee_obj.devices[self.device_addr].__dict__
 
-    def do_showlist(self, arg=None):
-        print zigbee_obj.devices.keys()
+    def help_showlist(self):
+        self.cprint.notice_p("show current devicelist info: showlist")
 
+    def do_showlist(self, arg=None):
+        self.keylist=[]
+        self.watchlist = []
+        for k in zigbee_obj.devices.keys():
+            self.keylist.append(k)
+            self.watchlist.append("0x%s" % binascii.hexlify(k))
+        self.cprint.notice_p(self.watchlist)
+
+    def help_sd(self):
+        self.cprint.notice_p("set current device index,basic on showlist: sd [showlistindex]")
     def do_sd(self, arg):
-        if(arg in zigbee_obj.devices):
-            self.device_addr = arg
+        args = arg.split()
+        if (len(args) != 1 or not args[0].isdigit() or self.watchlist ==None or int(args[0]) >= len(self.keylist)):
+            self.help_sd()
         else:
-            print ('arg: %s not in devices' % (arg,))
+            self.device_addr = self.keylist[int(arg)]
 
 
 
