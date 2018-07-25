@@ -7,14 +7,23 @@ __mtime__ = '2018-7-11'
 """
 from basic.BasicCommon import *
 from basic.BasicSimuCmd import BasicCmd, BaseWifiSim
-
+if sys.getdefaultencoding() != 'utf-8':
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+coding = sys.getfilesystemencoding()
 # region const variates
-rout_addr = ('192.168.10.1', 65381)
+import ConfigParser
+cf = ConfigParser.ConfigParser()
+cf.read('wifi_devices.conf')
+rout_addr = (cf.get('Common','rout_addr'), 65381)
+cl_level = eval(cf.get('Common','cl_level'))
+fl_level = eval(cf.get('Common','fl_level'))
+rm_log = eval(cf.get('Common','rm_log'))
 
 class IntercomCmd(BasicCmd):
     def __init__(self, logger, cprint):
         self.air_version = "20180706"
-        self.mac = str(hex(int(time.time())))[-8:]
+        self.mac = get_mac_by_tick()
         self.device_type = "Intercom"
         BasicCmd.__init__(self, logger=logger, cprint=cprint, version=self.air_version, d_type=self.device_type)
         self.sim_obj = eval(self.device_type)(logger, mac=self.mac, addr=rout_addr)
@@ -86,8 +95,10 @@ class Intercom(BaseWifiSim):
 
 
 if __name__ == '__main__':
-    LOG = MyLogger(os.path.abspath(sys.argv[0]).replace('py', 'log').replace('exe', 'log'), clevel=logging.DEBUG,
-                   rlevel=logging.WARN)
+    logpath = os.path.abspath(sys.argv[0]).replace('py', 'log').replace('exe', 'log')
+    if rm_log and os.path.isfile(logpath):
+        os.remove(logpath)
+    LOG = MyLogger(logpath, clevel=cl_level, flevel=fl_level)
     cprint = cprint(__name__)
     intercomcmd = IntercomCmd(logger=LOG, cprint=cprint)
     cprint.yinfo_p("start simu mac [%s]" % (intercomcmd.mac,))

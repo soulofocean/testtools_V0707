@@ -8,28 +8,37 @@ __mtime__ = '2018-7-4'
 import json
 from basic.BasicCommon import *
 from basic.BasicSimuCmd import BasicCmd, BaseWifiSim
-
+if sys.getdefaultencoding() != 'utf-8':
+	reload(sys)
+	sys.setdefaultencoding('utf-8')
+coding = sys.getfilesystemencoding()
 # region const variates
-rout_addr = ('192.168.10.1', 65381)
+import ConfigParser
+cf = ConfigParser.ConfigParser()
+cf.read('wifi_devices.conf')
+rout_addr = (cf.get('Common','rout_addr'), 65381)
+cl_level = eval(cf.get('Common','cl_level'))
+fl_level = eval(cf.get('Common','fl_level'))
+rm_log = eval(cf.get('Common','rm_log'))
 
 class OvenCmd(BasicCmd):
-    def __init__(self, logger, cprint):
-        self.air_version = "20180704"
-        self.mac = str(hex(int(time.time())))[-8:]
-        self.device_type = "Oven"
-        BasicCmd.__init__(self, logger=logger, cprint=cprint, version=self.air_version,d_type=self.device_type)
-        self.sim_obj = eval(self.device_type)(logger, mac=self.mac, addr=rout_addr)
-        self.do_start()
-        self.onoff_kv = {"0": "off", "1": "on"}
+	def __init__(self, logger, cprint):
+		self.air_version = "20180704"
+		self.mac = get_mac_by_tick()
+		self.device_type = "Oven"
+		BasicCmd.__init__(self, logger=logger, cprint=cprint, version=self.air_version,d_type=self.device_type)
+		self.sim_obj = eval(self.device_type)(logger, mac=self.mac, addr=rout_addr)
+		self.do_start()
+		self.onoff_kv = {"0": "off", "1": "on"}
 
-    def help_switch(self):
-        self.cprint.notice_p("switch %s:switch %s" % (self.device_type, self.onoff_kv))
-    def do_switch(self, arg):
-        args = arg.split()
-        if(len(args)!=1 or args[0] not in self.onoff_kv):
-            self.help_switch()
-        else:
-            self.sim_obj.set_item("_switch", self.onoff_kv[args[0]])
+	def help_switch(self):
+		self.cprint.notice_p("switch %s:switch %s" % (self.device_type, self.onoff_kv))
+	def do_switch(self, arg):
+		args = arg.split()
+		if(len(args)!=1 or args[0] not in self.onoff_kv):
+			self.help_switch()
+		else:
+			self.sim_obj.set_item("_switch", self.onoff_kv[args[0]])
 
 class Oven(BaseWifiSim):
 	def __init__(self, logger, mac='123456', time_delay=500, self_addr=None, addr=('192.168.10.1', 65381)):
@@ -235,9 +244,11 @@ class Oven(BaseWifiSim):
 			self.LOG.error('Msg wrong!')
 
 if __name__ == '__main__':
-    LOG = MyLogger(os.path.abspath(sys.argv[0]).replace('py', 'log').replace('exe', 'log'), clevel=logging.DEBUG,
-                   rlevel=logging.WARN)
-    cprint = cprint(__name__)
-    airCmd = OvenCmd(logger=LOG, cprint=cprint)
-    cprint.yinfo_p("start simu mac [%s]" % (airCmd.mac,))
-    airCmd.cmdloop()
+	logpath = os.path.abspath(sys.argv[0]).replace('py', 'log').replace('exe', 'log')
+	if rm_log and os.path.isfile(logpath):
+		os.remove(logpath)
+	LOG = MyLogger(logpath, clevel=cl_level, flevel=fl_level)
+	cprint = cprint(__name__)
+	airCmd = OvenCmd(logger=LOG, cprint=cprint)
+	cprint.yinfo_p("start simu mac [%s]" % (airCmd.mac,))
+	airCmd.cmdloop()
