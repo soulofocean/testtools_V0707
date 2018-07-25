@@ -8,15 +8,24 @@ __mtime__ = '2018-7-3'
 import json
 from basic.BasicCommon import *
 from basic.BasicSimuCmd import BasicCmd, BaseWifiSim
+if sys.getdefaultencoding() != 'utf-8':
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+coding = sys.getfilesystemencoding()
+import ConfigParser
+cf = ConfigParser.ConfigParser()
+cf.read('wifi_devices.conf')
+rout_addr = (cf.get('Common','rout_addr'), 65381)
+cl_level = eval(cf.get('Common','cl_level'))
+fl_level = eval(cf.get('Common','fl_level'))
+rm_log = eval(cf.get('Common','rm_log'))
 
-# region const variates
-rout_addr = ('192.168.10.1', 65381)
 
 
 class AirFilterCmd(BasicCmd):
     def __init__(self, logger, cprint):
         self.air_version = "20180703"
-        self.mac = str(hex(int(time.time())))[-8:]
+        self.mac = get_mac_by_tick()
         self.device_type = "AirFilter"
         BasicCmd.__init__(self, logger=logger, cprint=cprint, version=self.air_version, d_type=self.device_type)
         self.sim_obj = eval(self.device_type)(logger, mac=self.mac, addr=rout_addr)
@@ -77,7 +86,7 @@ class AirFilterCmd(BasicCmd):
 
 
 class AirFilter(BaseWifiSim):
-    def __init__(self, logger, mac='123456', time_delay=500, self_addr=None, addr=('192.168.10.1', 65381)):
+    def __init__(self, logger, mac='01-02-03-04-05-06', time_delay=500, self_addr=None, addr=('192.168.10.1', 65381)):
         super(AirFilter, self).__init__(logger, addr=addr, mac=mac, time_delay=time_delay, self_addr=self_addr,
                                         deviceCategory='air_filter.main')
         # self.LOG = logger
@@ -113,7 +122,7 @@ class AirFilter(BaseWifiSim):
                 "child_lock_switch_status": self._child_lock_switch_status,
                 "negative_ion_switch_status": self._negative_ion_switch_status,
                 "speed": self._speed,
-                "control": self._control_status,
+                "control_status": self._control_status,
                 "filter_time_used": self._filter_time_used,
                 "filter_time_remaining": self._filter_time_remaining,
                 "temperature": self._temperature,
@@ -171,6 +180,9 @@ class AirFilter(BaseWifiSim):
                     ("负离子开关: %s" % (msg['params']["attribute"]["negative_ion_switch"])).encode(coding))
                 self.set_item('_negative_ion_switch_status',
                               msg['params']["attribute"]["negative_ion_switch"])
+                if ("control" in msg['params']["attribute"]):
+                    self.set_item('_control_status',
+                                  msg['params']["attribute"]["control"])
                 return self.dm_set_rsp(msg['req_id'])
 
             elif msg['nodeid'] == u"air_filter.main.control":
@@ -178,12 +190,16 @@ class AirFilter(BaseWifiSim):
                     ("设置模式切换: %s" % (msg['params']["attribute"]["control"])).encode(coding))
                 self.set_item('_control_status',
                               msg['params']["attribute"]["control"])
+                if("negative_ion_switch" in msg['params']["attribute"]):
+                    self.set_item('_negative_ion_switch_status',
+                                  msg['params']["attribute"]["negative_ion_switch_status"])
                 return self.dm_set_rsp(msg['req_id'])
 
             elif msg['nodeid'] == u"air_filter.main.speed":
                 self.LOG.warn(
                     ("设置风量调节: %s" % (msg['params']["attribute"]["speed"])).encode(coding))
                 self.set_item('_speed', msg['params']["attribute"]["speed"])
+                self.set_item('_control_status', msg['params']["attribute"]["control"])
                 return self.dm_set_rsp(msg['req_id'])
 
             elif msg['nodeid'] == u"wifi.main.alarm_confirm":
@@ -197,9 +213,11 @@ class AirFilter(BaseWifiSim):
 
 
 if __name__ == '__main__':
-    LOG = MyLogger(os.path.abspath(sys.argv[0]).replace('py', 'log').replace('exe', 'log'), clevel=logging.DEBUG,
-                   rlevel=logging.WARN)
+    logpath = os.path.abspath(sys.argv[0]).replace('py', 'log').replace('exe', 'log')
+    if rm_log and os.path.isfile(logpath):
+        os.remove(logpath)
+    LOG = MyLogger(logpath, clevel=cl_level,flevel=fl_level)
     cprint = cprint(__name__)
-    airCmd = AirFilterCmd(logger=LOG, cprint=cprint)
-    cprint.yinfo_p("start simu mac [%s]" % (airCmd.mac,))
-    airCmd.cmdloop()
+    airfilterCmd = AirFilterCmd(logger=LOG, cprint=cprint)
+    cprint.yinfo_p("start simu mac [%s]" % (airfilterCmd.mac,))
+    airfilterCmd.cmdloop()
