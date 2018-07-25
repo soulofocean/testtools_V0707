@@ -982,7 +982,7 @@ class Switch(BaseZigbeeSim):
             'Read attribute response': {
                 b'\x00\x00': {
                     'cmd': b'\x01\x00\x00\x04\x00',
-                    'data': b'\x00' + b'\x42' + b'\x0a' + 'EverGrande' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x0e' + 'BH-SZ103',
+                    'data': b'\x00' + b'\x42' + b'\x0a' + 'EverGrande' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x0e' + 'BH-SZ201',
                 },
 
                 b'\x06\x00': {
@@ -1187,7 +1187,7 @@ class Tube_lamp(BaseZigbeeSim):
                     'cmd': b'\x01\x00\x00\x04\x00',
                     #'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_Dimmable_downlight',
                     #'data': b'\x00' + b'\x42' + b'\x03' + 'LDS' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x0e' + 'ZHA-ColorLight',
-                    'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_Dimmable_downlight_7W',
+                    'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x19' + 'PAK_Dimmable_downlight_7W',
                 },
 
                 b'\x06\x00': {
@@ -1484,7 +1484,7 @@ class Shoot_lamp(BaseZigbeeSim):
                     'cmd': b'\x01\x00\x00\x04\x00',
                     #'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_Dimmable_downlight',
                     #'data': b'\x00' + b'\x42' + b'\x03' + 'LDS' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x0e' + 'ZHA-ColorLight',
-                    'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_Dimmable_spotlight_10W',
+                    'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x1a' + 'PAK_Dimmable_spotlight_10W',
                 },
 
                 b'\x06\x00': {
@@ -2079,7 +2079,7 @@ class Celling_lamp(BaseZigbeeSim):
                     'cmd': b'\x01\x00\x00\x04\x00',
                     #'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_Dimmable_downlight',
                     #'data': b'\x00' + b'\x42' + b'\x03' + 'LDS' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x0e' + 'ZHA-ColorLight',
-                    'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_Dimmable_celling_light_28W',
+                    'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x1e' + 'PAK_Dimmable_celling_light_28W',
                 },
 
                 b'\x06\x00': {
