@@ -524,7 +524,7 @@ class ZIGBEE(communication_base):
                     mac = ''.join(random.sample('0123456789abcdef', 3))
                     short_id = chr(random.randint(0, 255)) + \
                                chr(random.randint(0, 255))
-                    short_id = chr(65) + chr(65)
+                    #short_id = chr(65) + chr(65)
                     Endpoint = b'\x00'
                     dst_addr = short_id + Endpoint
                     self.devices[dst_addr] = self.factory(
