@@ -118,6 +118,15 @@ class IPC(BaseWifiSim):
                     }
                 }
                 return json.dumps(rsp_msg)
+
+            elif msg['nodeid'] == u"ipc.main.record_msg":
+                self.LOG.warn(
+                    ("获取文件: %s" % (msg['params']["attribute"])).encode(coding))
+                timestamp = msg['params']["attribute"]["time"]
+                number = msg['params']["attribute"]["number"]
+                direction = msg['params']["attribute"]["direction"]
+                return self.record_msg_rsp(msg['req_id'],timestamp, number, direction)
+
             else:
                 self.LOG.warn('Unknow msg!')
 
@@ -222,6 +231,11 @@ class IPC(BaseWifiSim):
                     ("设置时间: %s" % (msg['params']["attribute"]["value"])).encode(coding))
                 return self.dm_set_rsp(msg['req_id'])
 
+            elif msg['nodeid'] == u"ipc.main.stream":
+                self.LOG.warn(
+                    ("获取流通道: %s" % (msg['params']["attribute"]["channel"])).encode(coding))
+                return self.stream_rsp(msg['req_id'],msg['params']["attribute"]["channel"])
+
             elif msg['nodeid'] == u"wifi.main.alarm_confirm":
                 return self.alarm_confirm_rsp(msg['req_id'], msg['params']["attribute"]["error_code"])
 
@@ -230,6 +244,52 @@ class IPC(BaseWifiSim):
 
         else:
             self.LOG.error('Msg wrong!')
+
+    def stream_rsp(self, req, channel, port='8888',ipaddr='192.168.10.33'):
+        rsp_msg = {
+            "method": "dm_set",
+            "req_id": req,
+            "msg": "success",
+            "code": 0,
+            "attribute":{
+                "url":("rstp://%s:%s/%s" % (ipaddr,port,channel,))
+            }
+        }
+        return json.dumps(rsp_msg)
+
+    def record_msg_rsp(self,req,timestamp,number,direction):
+        timeArray = time.localtime(timestamp)
+        #time.strftime("%Y-%m-%d %H:%M:%S", timeArray)
+        dataStr = time.strftime("%Y-%m-%d", timeArray)
+        file1 = ("%02d-%02d/%sM.mp4" % (timeArray.tm_hour,(timeArray.tm_hour+1)%24
+                                        ,time.strftime("%H%M%S", timeArray)))
+        file2 = ("%02d-%02d/%sD.mp4" % (timeArray.tm_hour, (timeArray.tm_hour + 1) % 24
+                                        , time.strftime("%H%M%S", timeArray)))
+        firstFile = file1
+        lastFile = file2
+        rsp_msg = {
+            "method": "dm_set",
+            "req_id": req,
+            "msg": "success",
+            "code": 0,
+            "attribute": {
+                "total": 2,
+                "more": 0,
+                "first": firstFile,
+                "last": lastFile,
+                "list":[
+                    {
+                        "data": dataStr,
+                        "file": file1
+                    },
+                    {
+                        "data": dataStr,
+                        "file": file2
+                    }
+                ]
+            }
+        }
+        return json.dumps(rsp_msg)
 
 
 if __name__ == '__main__':
