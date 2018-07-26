@@ -2376,7 +2376,7 @@ class DoorLock(BaseZigbeeSim):
                     'cmd': b'\x01\x00\x00\x04\x00',
                     #'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_Dimmable_downlight',
                     #'data': b'\x00' + b'\x42' + b'\x03' + 'LDS' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x0e' + 'ZHA-ColorLight',
-                    'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_RGB_LedStrip',
+                    'data': b'\x00' + b'\x42' + b'\x08' + 'doorlock' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x04' + 'bida',
                 },
 
                 b'\x06\x00': {
