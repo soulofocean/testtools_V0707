@@ -114,7 +114,7 @@ class Air(BaseWifiSim):
         # add by zx 20180524
         self.attr_dict = {
             "switchStatus": 'off',
-            "temperature": 16,
+            "temperature": 160,
             "mode": 'cold',
             "speed": 'low',
             "wind_up_down": 'off',
