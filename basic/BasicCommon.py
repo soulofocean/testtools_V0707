@@ -94,12 +94,11 @@ def need_add_lock(lock):
     return sync_with_lock
 
 #get mac by ticker and prefix
-def get_mac_by_tick(mac_prefix="00-01"):
+def get_mac_by_tick(mac_prefix="01"):
     macTmp = str(hex(int(time.time())))[-4:]
     if mac_prefix==None:
-        mac_prefix = "00-01"
-    mac = ("%s-%s-%s-%s-%s" % (mac_prefix, str(hex(random.randint(0,255)))[-2:],
-                               str(hex(random.randint(0,255)))[-2:],macTmp[0:2], macTmp[2:4]))
+        mac_prefix = "01"
+    mac = ("%s%s" % (mac_prefix, macTmp))
     return mac
 # Hex print
 def protocol_data_printB(data, title=''):
