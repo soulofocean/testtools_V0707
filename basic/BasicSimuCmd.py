@@ -2337,13 +2337,8 @@ class DoorLock(BaseZigbeeSim):
         self.need_stop = False
 
         # state data:
-        self._Switch = b'\x00\x00'
-        self._Hue = b''
+        self._Lockstatus = b'\x01'
         self.Saturation = b''
-        self._Color_X = b'\x66\x2d'
-        self._Color_Y = b'\xdf\x5c'
-        self._Color_Temperature = b'\xdd\x00'
-        self._Level = b'\x00\x00'
         self._Window_covering = b''
         self.Percentage_Lift_Value = b''
         self.Short_id = short_id
@@ -2381,18 +2376,9 @@ class DoorLock(BaseZigbeeSim):
 
                 b'\x06\x00': {
                     'cmd': b'\x01\x06\x00\x00\x00',
-                    'data': b'\x00' + b'\x10' + b'\x01' + self._Switch[0:0 + 1],
+                    'data': b'\x00' + b'\x10' + b'\x01' + self._Lockstatus[0:0 + 1],
                 },
 
-                b'\x08\x00': {
-                    'cmd': b'\x01\x08\x00\x00\x00',
-                    'data': b'\x00' + b'\x20' + b'\x01' + self._Level[0:0 + 1],
-                },
-
-                b'\x00\x03': {
-                    'cmd': b'\x01\x00\x03' + self.cmd[3:3 + 2],
-                    'data': b'\x00' + b'\x21' + b'\x04' + self._Color_X + self._Color_Y,
-                },
                 'default': {
                     'cmd': b'\x01\x00\x00\x00\x00',
                     'data': b'\x00' + b'\x10' + b'\x01\x00',
@@ -2492,32 +2478,13 @@ class DoorLock(BaseZigbeeSim):
                     datas['cmd'][1:], title='Unknow cmd:'))
 
         elif datas['cmd'][:1] == b'\x41':
-            if datas['cmd'][1:1 + 2] == b'\x06\x00':
-                if datas['cmd'][3:3 + 2] == b'\x00\x00':
-                    self.set_item('_Switch', b'\x00')
-                elif datas['cmd'][3:3 + 2] == b'\x01\x00':
-                    self.set_item('_Switch', b'\x01')
+            if datas['cmd'][1:1 + 2] == b'\x01\x01':
+                if datas['cmd'][3:3 + 2] == b'\x01\x00':
+                    self.set_item('_Lockstatus', b'\x02')
+                elif datas['cmd'][3:3 + 2] == b'\x00\x00':
+                    self.set_item('_Lockstatus', b'\x01')
                 else:
                     self.set_item('_Switch', b'\x02')
-
-            elif datas['cmd'][1:1 + 2] == b'\x00\x03':
-                if datas['cmd'][3:3 + 2] == b'\x06\x00':
-                    self.set_item('_Hue', datas['data'][0:0 + 1])
-                    self.set_item('Saturation', datas['data'][1:1 + 1])
-
-                elif datas['cmd'][3:3 + 2] == b'\x07\x00':
-                    self.set_item('_Color_X', datas['data'][0:0 + 2])
-                    self.set_item('_Color_Y', datas['data'][2:2 + 2])
-
-                elif datas['cmd'][3:3 + 2] == b'\x0a\x00':
-                    self.set_item('_Color_Temperature', datas['data'][0:0 + 2])
-
-                else:
-                    self.LOG.error(protocol_data_printB(
-                        datas['cmd'][3:3 + 2], title='Unknow cmd:'))
-
-            elif datas['cmd'][1:1 + 2] == b'\x08\x00':
-                self.set_item('_Level', datas['data'][0:0 + 1])
 
             elif datas['cmd'][1:1 + 2] == b'\x02\x01':
                 if datas['cmd'][3:3 + 2] == b'\x00\x00':
@@ -2555,14 +2522,6 @@ class DoorLock(BaseZigbeeSim):
                     rsp_datas['cmd'] = rsp_data[b'\x06\x00']['cmd']
                     rsp_datas['data'] = rsp_data[b'\x06\x00']['data']
 
-                elif datas['cmd'][1:1 + 2] == b'\x08\x00':
-                    rsp_datas['cmd'] = rsp_data[b'\x08\x00']['cmd']
-                    rsp_datas['data'] = rsp_data[b'\x08\x00']['data']
-                #add by -zx for cmd:00 00 03 03 00 and 00 00 03 04 00
-                elif datas['cmd'][1:1 + 2] == b'\x00\x03':
-                    rsp_datas['cmd'] = rsp_data[b'\x00\x03']['cmd']
-                    rsp_datas['data'] = rsp_data[b'\x00\x03']['data']
-
                 else:
                     self.LOG.error("Fuck Read attribute response")
                     rsp_datas['cmd'] = rsp_data['default']['cmd']
@@ -2583,10 +2542,6 @@ class DoorLock(BaseZigbeeSim):
                     rsp_datas['cmd'] = rsp_data[b'\x01\x01']['cmd']
                     rsp_datas['data'] = rsp_data[b'\x01\x01']['data']
 
-                elif datas['cmd'][1:1 + 2] == b'\x00\x03':
-                    rsp_datas['cmd'] = rsp_data[b'\x00\x03']['cmd']
-                    rsp_datas['data'] = rsp_data[b'\x00\x03']['data']
-
                 else:
                     rsp_datas['cmd'] = rsp_data['default']['cmd']
                     rsp_datas['data'] = rsp_data['default']['data']
@@ -2602,20 +2557,10 @@ class DoorLock(BaseZigbeeSim):
         return rsp_datas
 
     def event_report_proc(self, req_cmd_word):
-        if req_cmd_word == '_Switch':
-            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x06\x00' + b'\x00\x00', data=b'\x10' + self._Switch))
-
-        elif req_cmd_word == '_Color_Temperature' or req_cmd_word == '_Color_X':
-            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x00\x03' + b'\x04\x00',
-                                                       data=b'\x21' + self._Color_Y + b'\x03\x00' +
-                                                       b'\x21' + self._Color_X + b'\x07\x00' +
-                                                       b'\x21' + self._Color_Temperature))
-
-        elif req_cmd_word == '_Level':
-            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x08\x00' + b'\x00\x00', data=b'\x20' + self._Level))
-
-        elif req_cmd_word == '_Window_covering':
-            pass
+        if req_cmd_word == '_Lockstatus':
+            cmd=b'\x0a' + b'\x01\x01' + b'\x00\x00'
+            data_tmp = b'\x30' + self._Lockstatus + b'\x80\x00' + b'\x21\xff'
+            return self.send_msg(self.get_event_report(req_cmd_word=cmd, data=data_tmp))
 
         else:
             pass
