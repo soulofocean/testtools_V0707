@@ -69,7 +69,7 @@ if __name__ == '__main__':
         os.remove(logpath)
     LOG = MyLogger(logpath, clevel=cl_level, flevel=fl_level)
     cprint = cprint(__name__)
-    zigbee_obj = ZIGBEE('COM4', logger=LOG)
+    zigbee_obj = ZIGBEE(port, logger=LOG)
     zigbee_obj.run_forever()
     zigbee_obj.set_device(eval("Curtain"))
     cmd = CurtainCmd(logger=LOG,cprint=cprint)
