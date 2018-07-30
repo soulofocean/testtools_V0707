@@ -8,9 +8,9 @@ __mtime__ = '2018-7-18'
 from basic.BasicCommon import *
 from basic.BasicSimuCmd import BasicCmd,Switch
 from basic.BasicProtocol import ZIGBEE
+import ConfigParser
 
-
-class CurtainCmd(BasicCmd):
+class SwitchCmd(BasicCmd):
     def __init__(self, logger, cprint):
         self.air_version = "20180703"
         self.mac = str(hex(int(time.time())))[-8:]
@@ -23,11 +23,18 @@ class CurtainCmd(BasicCmd):
 
 
 if __name__ == '__main__':
-    LOG = MyLogger("%s.log" % (os.path.basename(sys.argv[0]).split(".")[0],), clevel=logging.INFO,
-                   rlevel=logging.WARN)
+    cf = ConfigParser.ConfigParser()
+    cf.read('zigbee_devices.conf')
+    port = cf.get('Common', 'port')
+    cl_level = eval(cf.get('Common', 'cl_level'))
+    fl_level = eval(cf.get('Common', 'fl_level'))
+    rm_log = eval(cf.get('Common', 'rm_log'))
+    logpath = os.path.abspath(sys.argv[0]).replace('py', 'log').replace('exe', 'log')
+    if rm_log and os.path.isfile(logpath):
+        os.remove(logpath)
+    LOG = MyLogger(logpath, clevel=cl_level, flevel=fl_level)
     cprint = cprint(__name__)
-    zigbee_obj = ZIGBEE('COM4', logger=LOG)
+    zigbee_obj = ZIGBEE(port, logger=LOG)
     zigbee_obj.run_forever()
-    zigbee_obj.set_device(eval("Switch"))
-    cmd = CurtainCmd(logger=LOG,cprint=cprint)
+    cmd = SwitchCmd(logger=LOG, cprint=cprint)
     cmd.cmdloop()
