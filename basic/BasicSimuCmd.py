@@ -982,7 +982,7 @@ class Switch(BaseZigbeeSim):
             'Read attribute response': {
                 b'\x00\x00': {
                     'cmd': b'\x01\x00\x00\x04\x00',
-                    'data': b'\x00' + b'\x42' + b'\x0a' + 'EverGrande' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x0e' + 'BH-SZ201',
+                    'data': b'\x00' + b'\x42' + b'\x0a' + 'EverGrande' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x0e' + 'BH-SZ103',
                 },
 
                 b'\x06\x00': {
@@ -2331,7 +2331,7 @@ class Celling_lamp(BaseZigbeeSim):
 
 class DoorLock(BaseZigbeeSim):
     def __init__(self, logger, mac=b'123456', short_id=b'\x11\x11', Endpoint=b'\x01'):
-        super(Led, self).__init__(logger=logger)
+        super(DoorLock, self).__init__(logger=logger)
         self.LOG = logger
         self.sdk_obj = None
         self.need_stop = False
@@ -2349,7 +2349,7 @@ class DoorLock(BaseZigbeeSim):
         self.Short_id = short_id
         self.Endpoint = Endpoint
         self.mac = str(mac) + b'\x00' * (8 - len(str(mac)))
-        self.Capability = b'\x05'
+        self.Capability = b'\x01'
         self.seq = b'\x01'
         self.cmd = b''
         self.addr = b''
@@ -2376,7 +2376,7 @@ class DoorLock(BaseZigbeeSim):
                     'cmd': b'\x01\x00\x00\x04\x00',
                     #'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_Dimmable_downlight',
                     #'data': b'\x00' + b'\x42' + b'\x03' + 'LDS' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x0e' + 'ZHA-ColorLight',
-                    'data': b'\x00' + b'\x42' + b'\x08' + 'doorlock' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x04' + 'bida',
+                    'data': b'\x00' + b'\x42' + b'\x04' + 'bida' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x08' + 'doorlock',
                 },
 
                 b'\x06\x00': {
@@ -2405,24 +2405,18 @@ class DoorLock(BaseZigbeeSim):
             },
 
             'Configure reporting response': {
-                b'\x06\x00': {
-                    'cmd': b'\x07\x06\x00\x00\x00',
-                    'data': b'\x00\x00\x00\x00',
-                },
-
-                b'\x08\x00': {
-                    'cmd': b'\x07\x08\x00\x00\x00',
-                    'data': b'\x00\x00\x00\x00',
-                },
-
-                b'\x00\x03': {
-                    'cmd': b'\x07\x00\x03' + self.cmd[3:3 + 2],
+                b'\x01\x00':{
+                    'cmd':b'\x07\x01\x00\x00\x00',
+                    'data':b'\x00\x00'
+                    },
+                b'\x01\x01': {
+                    'cmd': b'\x07\x01\x01\x00\x00',
                     'data': b'\x00\x00\x00\x00',
                 },
 
                 'default': {
-                    'cmd': b'\x07\x00\x00\x00\x00',
-                    'data': b'\x00\x00\x00\x00',
+                    'cmd': b'\x07' + self.cmd[1:1+2] + b'\x00\x00',
+                    'data': b'\x00\x00',
                 },
             },
         }
@@ -2581,13 +2575,13 @@ class DoorLock(BaseZigbeeSim):
             self.sdk_obj.set_work_status(False)
             rsp_data = self.get_cmd('Configure reporting response')
             if rsp_data:
-                if datas['cmd'][1:1 + 2] == b'\x06\x00':
-                    rsp_datas['cmd'] = rsp_data[b'\x06\x00']['cmd']
-                    rsp_datas['data'] = rsp_data[b'\x06\x00']['data']
+                if datas['cmd'][1:1 + 2] == b'\x01\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x01\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x01\x00']['data']
 
-                elif datas['cmd'][1:1 + 2] == b'\x08\x00':
-                    rsp_datas['cmd'] = rsp_data[b'\x08\x00']['cmd']
-                    rsp_datas['data'] = rsp_data[b'\x08\x00']['data']
+                elif datas['cmd'][1:1 + 2] == b'\x01\x01':
+                    rsp_datas['cmd'] = rsp_data[b'\x01\x01']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x01\x01']['data']
 
                 elif datas['cmd'][1:1 + 2] == b'\x00\x03':
                     rsp_datas['cmd'] = rsp_data[b'\x00\x03']['cmd']
