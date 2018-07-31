@@ -971,7 +971,8 @@ class Switch(BaseZigbeeSim):
 
             'Active Endpoint Response': {
                 'cmd': b'\x40\x05\x80\x00\x00',
-                'data': b'\x00' + self.Short_id + b'\x01' + self.Endpoint,
+                #'data': b'\x00' + self.Short_id + b'\x01' + self.Endpoint,
+                'data': b'\x00' + self.Short_id + b'\x03\x01' + b'\x02\x03',
             },
 
             'Leave response': {
