@@ -533,8 +533,14 @@ class ZIGBEE(communication_base):
                     self.devices[dst_addr].run_forever()
                     self.devices[short_id + b'\x01'] = self.devices[dst_addr]
                     if(self.factory.__name__ == 'Switch'):
-                        self.devices[short_id + b'\x02'] = self.devices[dst_addr]
-                        self.devices[short_id + b'\x03'] = self.devices[dst_addr]
+                        self.devices[short_id + b'\x02'] = self.factory(
+                        logger=self.LOG, mac=mac, short_id=short_id, Endpoint=b'\x02')
+                        self.devices[short_id + b'\x02'].sdk_obj = self
+                        self.devices[short_id + b'\x02'].run_forever()
+                        self.devices[short_id + b'\x03'] = self.factory(
+                        logger=self.LOG, mac=mac, short_id=short_id, Endpoint=b'\x03')
+                        self.devices[short_id + b'\x03'].sdk_obj = self
+                        self.devices[short_id + b'\x03'].run_forever()
                     self.LOG.warn("It is time to create a new zigbee device, type: %s, mac: %s, dst_addr: 0x%s" % (
                         self.factory.__name__, mac, binascii.hexlify(dst_addr)))
                 else:
