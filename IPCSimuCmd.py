@@ -22,18 +22,18 @@ fl_level = eval(cf.get('Common','fl_level'))
 rm_log = eval(cf.get('Common','rm_log'))
 
 class IPCCmd(BasicCmd):
-    def __init__(self, logger, cprint):
+    def __init__(self,rstp, logger, cprint):
         self.air_version = "20180706"
         self.mac = get_mac_by_tick()
         self.device_type = "IPC"
         BasicCmd.__init__(self, logger=logger, cprint=cprint, version=self.air_version, d_type=self.device_type)
-        self.sim_obj = eval(self.device_type)(logger, mac=self.mac, addr=rout_addr)
+        self.sim_obj = eval(self.device_type)(logger,rstp, mac=self.mac, addr=rout_addr)
         self.do_start()
         self.onoff_kv = {"0": "off", "1": "on"}
 
 
 class IPC(BaseWifiSim):
-    def __init__(self, logger, mac='123456', time_delay=500, self_addr=None, addr=('192.168.10.1', 65381)):
+    def __init__(self, logger, rstp_dict, mac='123456', time_delay=500, self_addr=None, addr=('192.168.10.1', 65381)):
         super(IPC, self).__init__(logger, addr=addr, mac=mac, time_delay=time_delay, self_addr=self_addr,
                                   deviceCategory='ipc.main')
         # self.LOG = logger
@@ -62,6 +62,7 @@ class IPC(BaseWifiSim):
             "unused" : 100
         }
         self._voice = 'release'
+        self.rstp_dict = rstp_dict
 
 
     def get_event_report(self):
@@ -245,14 +246,14 @@ class IPC(BaseWifiSim):
         else:
             self.LOG.error('Msg wrong!')
 
-    def stream_rsp(self, req, channel, port='8888',ipaddr='192.168.10.33'):
+    def stream_rsp(self, req, channel):
         rsp_msg = {
             "method": "dm_set",
             "req_id": req,
             "msg": "success",
             "code": 0,
             "attribute":{
-                "url":("rstp://%s:%s/%s" % (ipaddr,port,channel,))
+                "url": self.rstp_dict[channel]
             }
         }
         return json.dumps(rsp_msg)
@@ -291,6 +292,12 @@ class IPC(BaseWifiSim):
         }
         return json.dumps(rsp_msg)
 
+def get_rstp_addr_dict():
+    rstp_dict = {}
+    rstp_dict["main"] = cf.get('IPC','main')
+    rstp_dict["sub"] = cf.get('IPC', 'sub')
+    rstp_dict["file"] = cf.get('IPC', 'file')
+    return rstp_dict
 
 if __name__ == '__main__':
     logpath = os.path.abspath(sys.argv[0]).replace('py', 'log').replace('exe', 'log')
@@ -298,6 +305,6 @@ if __name__ == '__main__':
         os.remove(logpath)
     LOG = MyLogger(logpath, clevel=cl_level, flevel=fl_level)
     cprint = cprint(__name__)
-    ipcCmd = IPCCmd(logger=LOG, cprint=cprint)
+    ipcCmd = IPCCmd(get_rstp_addr_dict(), logger=LOG, cprint=cprint)
     cprint.yinfo_p("start simu mac [%s]" % (ipcCmd.mac,))
     ipcCmd.cmdloop()
