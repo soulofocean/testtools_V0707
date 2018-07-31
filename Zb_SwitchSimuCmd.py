@@ -36,5 +36,6 @@ if __name__ == '__main__':
     cprint = cprint(__name__)
     zigbee_obj = ZIGBEE(port, logger=LOG)
     zigbee_obj.run_forever()
+    zigbee_obj.set_device(eval("Switch"))
     cmd = SwitchCmd(logger=LOG, cprint=cprint)
     cmd.cmdloop()
