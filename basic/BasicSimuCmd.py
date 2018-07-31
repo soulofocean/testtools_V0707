@@ -2380,8 +2380,18 @@ class DoorLock(BaseZigbeeSim):
                     'data': b'\x00' + b'\x10' + b'\x01' + self._Lockstatus[0:0 + 1],
                 },
 
+                b'\x01\x00\x21\x00': {
+                    'cmd': b'\x01\x01\x00\x21\x00',
+                    'data': b'\x00\x20\xa0'
+                },
+
+                b'\x01\x01\x82\x00': {
+                    'cmd': b'\x01\x01\x01\x82\x00',
+                    'data': b'\x00\x20\x00'
+                },
+
                 'default': {
-                    'cmd': b'\x01\x00\x00\x00\x00',
+                    'cmd': b'\x01' + self.cmd[1:1+4],
                     'data': b'\x00' + b'\x10' + b'\x01\x00',
                 },
             },
@@ -2405,6 +2415,11 @@ class DoorLock(BaseZigbeeSim):
                     'cmd': b'\x07' + self.cmd[1:1+2] + b'\x00\x00',
                     'data': b'\x00\x00',
                 },
+            },
+
+            'Onoff Lock Response': {
+                'cmd': b'\x4a\x01\x01\x00\x00',
+                'data': b'\x01\x02\xff\xff\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00'
             },
         }
         return cmds.get(cmd, None)
@@ -2480,12 +2495,19 @@ class DoorLock(BaseZigbeeSim):
 
         elif datas['cmd'][:1] == b'\x41':
             if datas['cmd'][1:1 + 2] == b'\x01\x01':
+                rsp_data = self.get_cmd('Onoff Lock Response')
                 if datas['cmd'][3:3 + 2] == b'\x01\x00':
                     self.set_item('_Lockstatus', b'\x02')
+                    self.task_obj.add_task(
+                        'autoclosedoor', self.set_item, 1, 300, '_Lockstatus',b'\x01')
                 elif datas['cmd'][3:3 + 2] == b'\x00\x00':
                     self.set_item('_Lockstatus', b'\x01')
+                if rsp_data:
+                    rsp_datas['cmd'] = rsp_data['cmd']
+                    rsp_datas['data'] = rsp_data['data']
                 else:
-                    self.set_item('_Switch', b'\x02')
+                    pass
+                return rsp_datas
 
             elif datas['cmd'][1:1 + 2] == b'\x02\x01':
                 if datas['cmd'][3:3 + 2] == b'\x00\x00':
@@ -2523,6 +2545,14 @@ class DoorLock(BaseZigbeeSim):
                     rsp_datas['cmd'] = rsp_data[b'\x06\x00']['cmd']
                     rsp_datas['data'] = rsp_data[b'\x06\x00']['data']
 
+                elif datas['cmd'][1:1 + 4] == b'\x01\x00\x21\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x01\x00\x21\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x01\x00\x21\x00']['data']
+
+                elif datas['cmd'][1:1 + 4] == b'\x01\x01\x82\x00':
+                    rsp_datas['cmd'] = rsp_data[b'\x01\x01\x82\x00']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x01\x01\x82\x00']['data']
+
                 else:
                     self.LOG.error("Fuck Read attribute response")
                     rsp_datas['cmd'] = rsp_data['default']['cmd']
@@ -2559,8 +2589,13 @@ class DoorLock(BaseZigbeeSim):
 
     def event_report_proc(self, req_cmd_word):
         if req_cmd_word == '_Lockstatus':
-            cmd=b'\x0a' + b'\x01\x01' + b'\x00\x00'
-            data_tmp = b'\x30' + self._Lockstatus + b'\x80\x00' + b'\x21\xff'
+            cmd = b'\x0a\x01\x01\x00\x00'
+            dataEnd = b'\x15'
+            if self._Lockstatus == b'\x01':
+                dataEnd = '\x13'
+            if self._Lockstatus == b'\x02':
+                dataEnd = '\x15'
+            data_tmp = b'\x30' + self._Lockstatus + b'\x80\x00\x21\xff' + dataEnd
             return self.send_msg(self.get_event_report(req_cmd_word=cmd, data=data_tmp))
 
         else:
