@@ -248,7 +248,7 @@ class IPC(BaseWifiSim):
 
     def stream_rsp(self, req, channel):
         rsp_msg = {
-            "method": "dm_set",
+            "method": "dm_get",
             "req_id": req,
             "msg": "success",
             "code": 0,
