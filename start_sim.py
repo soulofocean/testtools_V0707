@@ -20,10 +20,10 @@ def start_sim():
     for sim_name in List_sim:
         Sim =None
         if sim_name == 'air':
-            for i in range(0,3):
-                Log = MyLogger(join('log','%s%s.log' % (sim_name,i)), clevel=logging.CRITICAL, rlevel=logging.WARN)
+            for i in range(0,124):
+                Log = MyLogger(join('log','%s%s.log' % (sim_name,i)), clevel=logging.INFO, rlevel=logging.INFO)
                 Sim = Air
-                sim = Sim(logger=Log, mac=''.join(random.sample(mac_sample_str, 12)), time_delay=500)
+                sim = Sim(logger=Log, mac=''.join(random.sample(mac_sample_str, 6)), addr=('192.168.10.1', 65381), time_delay=500)
                 sim.run_forever()
                 device_online_list.append(sim)
         elif sim_name == 'hanger':
