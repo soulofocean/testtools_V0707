@@ -14,17 +14,18 @@ import time
 import random
 Dict_sim =\
     {
-        'air': 20,
-        'hanger':20,
-        'waterfilter':20,
-        'airfilter':20,
-        'washer':20
+        'air': 1,
+        'hanger':1,
+        'waterfilter':1,
+        'airfilter':1,
+        'washer':1
     }
 rout_addr = "192.168.10.1"
 
 device_online_list=[]
 mac_sample_str="1234567890abcdef"
 Sim=''
+useRandomMac = False
 
 def start_sim():
     totalcount = 0
@@ -40,7 +41,10 @@ def start_sim():
     for sim_name, sim_cnt in Dict_sim.items():
         if sim_name == 'air':
             for i in range(0,sim_cnt):
-                macTmp = ("Air%03d" % (i,))
+                if useRandomMac:
+                    macTmp = ''.join(random.sample(mac_sample_str, 6))
+                else:
+                    macTmp = ("010%03d" % (i,))
                 Log = MyLogger(join('log','%s%s.log' % (sim_name,i)), clevel=clevel, rlevel=rlevel)
                 Sim = Air
                 sim = Sim(logger=Log, mac=macTmp, addr=(rout_addr, 65381), time_delay=500)
@@ -48,7 +52,10 @@ def start_sim():
                 device_online_list.append(sim)
         elif sim_name == 'hanger':
             for i in range(0,sim_cnt):
-                macTmp = ("Hag%03d" % (i,))
+                if useRandomMac:
+                    macTmp = ''.join(random.sample(mac_sample_str, 6))
+                else:
+                    macTmp = ("020%03d" % (i,))
                 Log = MyLogger(join('log', '%s%s.log' % (sim_name, i)), clevel=clevel, rlevel=rlevel)
                 Sim = Hanger
                 sim = Sim(logger=Log, mac=macTmp, addr=(rout_addr, 65381), time_delay=500)
@@ -56,7 +63,10 @@ def start_sim():
                 device_online_list.append(sim)
         elif sim_name == 'waterfilter':
             for i in range(0,sim_cnt):
-                macTmp = ("Wft%03d" % (i,))
+                if useRandomMac:
+                    macTmp = ''.join(random.sample(mac_sample_str, 6))
+                else:
+                    macTmp = ("030%03d" % (i,))
                 Log = MyLogger(join('log', '%s%s.log' % (sim_name, i)), clevel=clevel, rlevel=rlevel)
                 Sim = Waterfilter
                 sim = Sim(logger=Log, mac=macTmp, addr=(rout_addr, 65381), time_delay=500)
@@ -64,7 +74,10 @@ def start_sim():
                 device_online_list.append(sim)
         elif sim_name == 'airfilter':
             for i in range(0,sim_cnt):
-                macTmp = ("Aft%03d" % (i,))
+                if useRandomMac:
+                    macTmp = ''.join(random.sample(mac_sample_str, 6))
+                else:
+                    macTmp = ("040%03d" % (i,))
                 Log = MyLogger(join('log', '%s%s.log' % (sim_name, i)), clevel=clevel, rlevel=rlevel)
                 Sim = AirFilter
                 sim = Sim(logger=Log, mac=macTmp, addr=(rout_addr, 65381), time_delay=500)
@@ -72,7 +85,10 @@ def start_sim():
                 device_online_list.append(sim)
         elif sim_name == 'washer':
             for i in range(0,sim_cnt):
-                macTmp = ("Wsh%03d" % (i,))
+                if useRandomMac:
+                    macTmp = ''.join(random.sample(mac_sample_str, 6))
+                else:
+                    macTmp = ("050%03d" % (i,))
                 Log = MyLogger(join('log', '%s%s.log' % (sim_name, i)), clevel=clevel, rlevel=rlevel)
                 Sim = Washer
                 sim = Sim(logger=Log, mac=macTmp, addr=(rout_addr, 65381), time_delay=500)
