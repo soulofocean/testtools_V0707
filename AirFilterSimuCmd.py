@@ -88,7 +88,7 @@ class AirFilterCmd(BasicCmd):
 class AirFilter(BaseWifiSim):
     def __init__(self, logger, mac='01-02-03-04-05-06', time_delay=500,self_addr=None, addr=('192.168.10.1', 65381)):
         super(AirFilter, self).__init__(logger, addr=addr, mac=mac, time_delay=time_delay, self_addr=self_addr,
-                                        deviceCategory='air_filter.main', manufacture="tcl", deviceModel="KJ315F-A1")
+                                        deviceCategory='air_filter.main', manufacture="tcl", deviceModel="KJ819F-B2")
         # self.LOG = logger
         # self.sdk_obj = Wifi(logger=logger, time_delay=time_delay,mac=mac, deviceCategory='air_filter.main', self_addr=self_addr)
         # self.sdk_obj.sim_obj = self
@@ -109,8 +109,8 @@ class AirFilter(BaseWifiSim):
         self._control_status = 'auto'
         self._filter_time_used = '101'
         self._filter_time_remaining = '1899'
-        self._temperature = "1888"
-        self._humidity = "5666"
+        self._temperature = "18.88"
+        self._humidity = "56.66"
         self._replace_filter = "false"
 
     def get_event_report(self):
