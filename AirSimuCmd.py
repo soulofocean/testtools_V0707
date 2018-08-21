@@ -98,7 +98,8 @@ class AirCmd(BasicCmd):
 class Air(BaseWifiSim):
     def __init__(self, logger, mac='123456', time_delay=500, self_addr=None, addr=('192.168.10.1', 65381)):
         super(Air, self).__init__(logger, addr=addr, mac=mac, time_delay=time_delay
-                                  , self_addr=self_addr, deviceCategory='airconditioner.new')
+                                  , self_addr=self_addr, deviceCategory='airconditioner.new',
+                                  manufacture="tcl", deviceModel="KFRd-51LW/RC11BpA")
         # self.LOG = logger
         # self.sdk_obj = Wifi(logger=logger, time_delay=time_delay
         # , mac=mac, deviceCategory='airconditioner.new', self_addr=self_addr)

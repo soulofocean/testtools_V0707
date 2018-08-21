@@ -58,7 +58,8 @@ class WaterFilterCmd(BasicCmd):
 class Waterfilter(BaseWifiSim):
     def __init__(self, logger, mac='123456', time_delay=500, self_addr=None, addr=('192.168.10.1', 65381)):
         super(Waterfilter, self).__init__(logger, addr=addr, mac=mac, time_delay=time_delay, self_addr=self_addr,
-                                          deviceCategory='water_filter.main')
+                                          deviceCategory='water_filter.main',
+                                          manufacture="tcl", deviceModel="TRO509-4")
         # self.LOG = logger
         # self.sdk_obj = Wifi(logger=logger, time_delay=time_delay,mac=mac, deviceCategory='water_filter.main', self_addr=self_addr)
         # self.sdk_obj.sim_obj = self

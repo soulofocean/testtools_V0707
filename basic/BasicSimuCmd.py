@@ -102,10 +102,12 @@ class BaseWifiSim():
     status_lock = threading.Lock()
 
     def __init__(self, logger, addr=('192.168.10.1', 65381), mac='123456', time_delay=500
-                 , self_addr=None, deviceCategory='airconditioner.new'):
+                 , self_addr=None, deviceCategory='airconditioner.new', manufacture="HDiot",
+                 deviceModel="KFR-50LW/10CBB23AU1"):
         self.LOG = logger
         self.sdk_obj = Wifi(logger=logger, time_delay=time_delay,
-                            mac=mac, deviceCategory=deviceCategory, self_addr=self_addr, addr=addr)
+                            mac=mac, deviceCategory=deviceCategory, self_addr=self_addr, addr=addr,
+                            manufacture=manufacture, deviceModel=deviceModel)
         self.sdk_obj.sim_obj = self
         self.need_stop = False
 

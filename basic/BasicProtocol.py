@@ -199,7 +199,8 @@ class Wifi(communication_base):
     state_lock = threading.Lock()
 
     def __init__(self, logger=None, addr=('192.168.10.1', 65381), time_delay=500, mac='123456',
-                 deviceCategory='airconditioner.new', self_addr=None):
+                 deviceCategory='airconditioner.new', self_addr=None, manufacture="HDiot",
+                 deviceModel="KFR-50LW/10CBB23AU1"):
         self.queue_in = Queue.Queue()
         self.queue_out = Queue.Queue()
         super(Wifi, self).__init__(self.queue_in, self.queue_out,
@@ -221,7 +222,7 @@ class Wifi(communication_base):
         # mac = random.randint(100000, 999999)
         self.mac = str(mac) + '\x00' * (32 - len(str(mac)))
         # char manufactureId[34]; // manuafacture name: haier
-        manufacture = 'HDiot'
+        # manufacture = manufacture
         self.manufacture = manufacture + '\x00' * (34 - len(manufacture))
         # char deviceCategory[34]; // device category: KFR-50LW/10CBB23AU1
         self.deviceCategory = deviceCategory + \
@@ -229,8 +230,8 @@ class Wifi(communication_base):
         # 2:short subCategory; //subCategory: 1
         self.subCategory = '\x01\x00'
         # char deviceModel[34];// device model: KFR-50LW/10CBB23AU1
-        self.deviceModel = 'KFR-50LW/10CBB23AU1' + \
-                           '\x00' * (34 - len('KFR-50LW/10CBB23AU1'))
+        self.deviceModel = deviceModel + \
+                           '\x00' * (34 - len(deviceModel))
         # char firmwareVersion[32];// firmware version
         firmwareVersion = '0.6.8'
         self.firmwareVersion = firmwareVersion + \

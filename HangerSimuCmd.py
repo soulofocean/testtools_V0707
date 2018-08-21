@@ -140,7 +140,7 @@ class HangerCmd(BasicCmd):
 class Hanger(BaseWifiSim):
     def __init__(self, logger, mac='123456', time_delay=500, self_addr=None, addr=('192.168.10.1', 65381)):
         super(Hanger, self).__init__(logger, addr=addr, mac=mac, time_delay=time_delay, self_addr=self_addr,
-                                     deviceCategory='clothes_hanger.main')
+                                     deviceCategory='clothes_hanger.main',manufacture="tcl", deviceModel="ML1-1304XFHP")
         # self.LOG = logger
         # self.sdk_obj = Wifi(logger=logger, time_delay=time_delay,mac=mac, deviceCategory='clothes_hanger.main', self_addr=self_addr)
         # self.sdk_obj.sim_obj = self

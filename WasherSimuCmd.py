@@ -45,7 +45,8 @@ class WasherCmd(BasicCmd):
 class Washer(BaseWifiSim):
     def __init__(self, logger, mac='123456', time_delay=500, self_addr=None, addr=('192.168.10.1', 65381)):
         super(Washer, self).__init__(logger, addr=addr, mac=mac, time_delay=time_delay, self_addr=self_addr,
-                                     deviceCategory='wash_machine.main')
+                                     deviceCategory='wash_machine.main',
+                                     manufacture="tcl", deviceModel="XQG85-FD3011HBD")
         # self.LOG = logger
         # self.sdk_obj = Wifi(logger=logger, time_delay=time_delay,mac=mac, deviceCategory='wash_machine.main', self_addr=self_addr)
         # self.sdk_obj.sim_obj = self

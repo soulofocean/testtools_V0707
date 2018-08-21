@@ -86,9 +86,9 @@ class AirFilterCmd(BasicCmd):
 
 
 class AirFilter(BaseWifiSim):
-    def __init__(self, logger, mac='01-02-03-04-05-06', time_delay=500, self_addr=None, addr=('192.168.10.1', 65381)):
+    def __init__(self, logger, mac='01-02-03-04-05-06', time_delay=500,self_addr=None, addr=('192.168.10.1', 65381)):
         super(AirFilter, self).__init__(logger, addr=addr, mac=mac, time_delay=time_delay, self_addr=self_addr,
-                                        deviceCategory='air_filter.main')
+                                        deviceCategory='air_filter.main', manufacture="tcl", deviceModel="KJ315F-A1")
         # self.LOG = logger
         # self.sdk_obj = Wifi(logger=logger, time_delay=time_delay,mac=mac, deviceCategory='air_filter.main', self_addr=self_addr)
         # self.sdk_obj.sim_obj = self
