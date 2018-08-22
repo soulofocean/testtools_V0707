@@ -302,6 +302,7 @@ class BaseZigbeeSim():
         self.need_stop = False
 
         # state data:
+        self.report_seq = b'\x01'
         self.task_obj = Task('common-task', self.LOG)
         self.create_tasks()
 
@@ -392,11 +393,12 @@ class BaseZigbeeSim():
         return def_rsp
 
     def add_seq(self):
-        seq = struct.unpack('B', self.seq)[0]
+        seq = struct.unpack('B', self.report_seq)[0]
         seq += 1
         if seq >= 255:
             seq = 0
-        self.seq = struct.pack('B', seq)
+        #self.seq = struct.pack('B', seq)
+        self.set_item("report_seq",struct.pack('B', seq))
 
     def set_seq(self, seq):
         self.seq = seq
@@ -415,12 +417,13 @@ class BaseZigbeeSim():
         self.add_seq()
         send_datas = {
             'control': b'\x00',
-            'seq': self.seq,
+            'seq': self.report_seq,
             'addr': self.addr,
             'cmd': req_cmd_word,
             'reserve': b'',
             'data': data,
         }
+
         return send_datas
 
 class Curtain(BaseZigbeeSim):
@@ -444,12 +447,15 @@ class Curtain(BaseZigbeeSim):
     def update_percent_lift(self, action):
         if action == 'close':
             if self._percent_lift > 1:
-                self._percent_lift -= 1
+                self._percent_lift -= 10
             else:
                 pass
         else:
             if self._percent_lift < 100:
-                self._percent_lift += 1
+                if self._percent_lift == 91:
+                    self._percent_lift =100
+                else:
+                    self._percent_lift += 10
             else:
                 pass
 
@@ -572,13 +578,13 @@ class Curtain(BaseZigbeeSim):
                     self.set_item('switch', 1)
                     self.task_obj.del_task('close')
                     self.task_obj.add_task(
-                        'open', self.update_percent_lift, 100, 10, 'open')
+                        'open', self.update_percent_lift, 10, 50, 'open')
 
                 elif datas['cmd'][3:3 + 2] == b'\x01\x00':
                     self.set_item('switch', 0)
                     self.task_obj.del_task('open')
                     self.task_obj.add_task(
-                        'close', self.update_percent_lift, 100, 10, 'close')
+                        'close', self.update_percent_lift, 10, 50, 'close')
 
                 elif datas['cmd'][3:3 + 2] == b'\x02\x00':
                     self.set_item('switch', 2)
