@@ -384,7 +384,8 @@ class Task():
     def task_proc(self):
         while self.need_stop == False:
             if len(self.tasks) == 0:
-                self.LOG.debug("No task!\n")
+                pass
+                #self.LOG.debug("No task!\n")
 
             '''
             for task in self.tasks:
