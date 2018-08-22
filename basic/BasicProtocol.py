@@ -625,7 +625,7 @@ class ZIGBEE(communication_base):
     def recv_data(self):
         datas = self.connection.readall()
         if datas:
-            self.LOG.info(protocol_data_printB(
+            self.LOG.debug(protocol_data_printB(
                 datas, title=self.port + " recv data:"))
         return datas
 
