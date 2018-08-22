@@ -462,7 +462,7 @@ class ZIGBEE(communication_base):
         left_data = ''
 
         while data[0:2] != b'\xaa\x55' and len(data) >= self.min_length:
-            self.LOG.warn('give up dirty data: %02x' % ord(data[0]))
+            #self.LOG.warn('give up dirty data: %02x' % ord(data[0]))
             data = data[1:]
 
         if len(data) < self.min_length:
