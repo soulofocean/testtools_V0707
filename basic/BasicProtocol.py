@@ -428,6 +428,18 @@ class ZIGBEE(communication_base):
         self.src_addr = b'\x00\x00\xf1'
         self.working = False
 
+    def TestFun(self):
+        short_id = chr(65) + chr(65)
+        Endpoint = b'\x00'
+        dst_addr = short_id + Endpoint
+        mac = "AAA"
+        self.devices[dst_addr] = self.factory(
+            logger=self.LOG, mac=mac, short_id=short_id, Endpoint=Endpoint)
+        self.devices[dst_addr].sdk_obj = self
+        self.devices[dst_addr].run_forever()
+        self.devices[short_id + b'\x01'] = self.devices[dst_addr]
+        self.devices[dst_addr].event_report_proc("_Switch")
+
     @need_add_lock(factory_lock)
     def set_work_status(self, status):
         if status:
@@ -491,7 +503,7 @@ class ZIGBEE(communication_base):
         thread_list.append([self.schedule_loop])
         thread_list.append([self.send_data_loop])
         thread_list.append([self.recv_data_loop])
-        thread_list.append([self.heartbeat_loop])
+        #thread_list.append([self.heartbeat_loop])
         thread_list.append([self.task_obj.task_proc])
         thread_ids = []
         for th in thread_list:
@@ -515,14 +527,30 @@ class ZIGBEE(communication_base):
                 self.LOG.error('Unknow address!')
                 return 'No_need_send'
 
+            #print("dev_addr:{}\nrout_addr:{}\nCmd:{}".format(binascii.hexlify(dst_addr),
+            #                                         binascii.hexlify(src_addr),binascii.hexlify(cmd)))
             if dst_addr in self.devices:
                 pass
             else:
                 if self.factory and self.get_work_status() == False:
+                    if not cmd == b'\x40\x36\x00\x00\x00':
+                        self.LOG.error("unexpected cmd:{}".format(binascii.hexlify(cmd)))
+                        data_length = length - 16
+                        data = msg[-2 - data_length:-2]
+                        datas = {
+                            'control': bit_set(control, 7),
+                            'seq': seq,
+                            'addr': dst_addr,
+                            'cmd': cmd,
+                            'reserve': b'',
+                            'data': data,
+                        }
+                        return self.msg_build(datas)
                     self.set_work_status(True)
                     self.task_obj.add_task(
                         'reset factory status', self.set_work_status, 1, 500, False)
                     mac = ''.join(random.sample('0123456789abcdef', 3))
+                    #mac = "AAA"
                     short_id = chr(random.randint(0, 255)) + \
                                chr(random.randint(0, 255))
                     #short_id = chr(65) + chr(65)
