@@ -301,6 +301,8 @@ class BaseZigbeeSim():
         self.sdk_obj = None
         self.need_stop = False
 
+        self.reportbeat_interval = 100
+
         # state data:
         self.report_seq = b'\x01'
         self.task_obj = Task('common-task', self.LOG)
@@ -343,6 +345,7 @@ class BaseZigbeeSim():
         thread_list = []
         thread_list.append([self.task_obj.task_proc])
         thread_list.append([self.status_report_monitor])
+        thread_list.append([self.reportAsHeartbeat])
         thread_ids = []
         for th in thread_list:
             thread_ids.append(threading.Thread(target=th[0], args=th[1:]))
@@ -350,6 +353,16 @@ class BaseZigbeeSim():
         for th in thread_ids:
             th.setDaemon(True)
             th.start()
+
+    def reportAsHeartbeat(self):
+        while self.need_stop == False:
+            if(self.addr == b''):
+                pass
+            else:
+                self.LOG.warn("To send {0} heartBeat[dev_addr:{1}]".format(self.__class__.__name__,
+                                                                            binascii.hexlify(self.addr)))
+                self.event_report_proc("_Switch")
+            time.sleep(self.reportbeat_interval)
 
     def create_tasks(self):
         self.task_obj.add_task(
@@ -443,6 +456,16 @@ class Curtain(BaseZigbeeSim):
         self.seq = b'\x01'
         self.cmd = b''
         self.addr = b''
+
+    def reportAsHeartbeat(self):
+        while self.need_stop == False:
+            if(self.addr == b''):
+                pass
+            else:
+                self.LOG.warn("To send {0} heartBeat[dev_addr:{1}]".format(self.__class__.__name__,
+                                                                            binascii.hexlify(self.addr)))
+                self.event_report_proc("_percent_lift")
+            time.sleep(self.reportbeat_interval)
 
     def update_percent_lift(self, action):
         if action == 'close':
@@ -2357,6 +2380,16 @@ class DoorLock(BaseZigbeeSim):
         self.seq = b'\x01'
         self.cmd = b''
         self.addr = b''
+
+    def reportAsHeartbeat(self):
+        while self.need_stop == False:
+            if(self.addr == b''):
+                pass
+            else:
+                self.LOG.warn("To send {0} heartBeat[dev_addr:{1}]".format(self.__class__.__name__,
+                                                                            binascii.hexlify(self.addr)))
+                self.event_report_proc("_Lockstatus")
+            time.sleep(self.reportbeat_interval)
 
     def get_cmd(self, cmd):
         cmds = {
