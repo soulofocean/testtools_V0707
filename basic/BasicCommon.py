@@ -17,6 +17,7 @@ import traceback
 import os
 import time
 import random
+import ConfigParser
 
 if sys.getdefaultencoding() != 'utf-8':
     reload(sys)
@@ -76,6 +77,39 @@ if re.search(r'linux', sys.platform):
     pass
 else:
     std_out_handle = ctypes.windll.kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
+
+def get_zb_save_dev_file():
+    return "zb_dev.ini"
+
+def save_zb_dev_file(dev_short_addr, save_file=False, server_addr = b'\x00\x00\x01', dev_mac="123456",
+                     dev_type="Curtain", filename = get_zb_save_dev_file()):
+    if save_file:
+        cf =ConfigParser.ConfigParser()
+        cf.read(filename)
+        section = binascii.hexlify(dev_short_addr)[0:4]
+        if not cf.has_section(section):
+            cf.add_section(section)
+        #cf.set(section,"server_addr",binascii.hexlify(server_addr)[0:4])
+        cf.set(section, "dev_mac", dev_mac)
+        cf.set(section, "dev_type", dev_type)
+        with open(filename, "w+") as f:
+            cf.write(f)
+            f.close()
+    else:
+        pass
+
+def del_zb_dev_file(rsp_datas, save_file=False, fileName= get_zb_save_dev_file()):
+    if save_file:
+        if len(rsp_datas) < 6 or not rsp_datas['cmd'] == b'\x40\x34\x80\x01\x00':
+            return
+        cf = ConfigParser.ConfigParser()
+        if cf.read(fileName):
+            section = binascii.hexlify(rsp_datas['addr'])[0:4]
+            if cf.has_section(section):
+                cf.remove_section(section)
+                with open(fileName, "w+") as f:
+                    cf.write(f)
+                    f.close()
 
 
 # use to add lock befow call the func
