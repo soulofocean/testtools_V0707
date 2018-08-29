@@ -408,7 +408,7 @@ class ZIGBEE(communication_base):
     status_lock = threading.Lock()
     factory_lock = threading.Lock()
 
-    def __init__(self, port, logger, time_delay=0):
+    def __init__(self, port, logger, time_delay=0, savefile = False):
         self.port = port
         self.LOG = logger
         super(ZIGBEE, self).__init__(queue_in=Queue.Queue(),
@@ -424,9 +424,10 @@ class ZIGBEE(communication_base):
 
         # status data:
         self.head = b'\xaa\x55'
-        self.dst_addr = b''
+        self.dst_addr = b'\x00\x00\x01'#for dev from file to send heart beat by report status
         self.src_addr = b'\x00\x00\xf1'
         self.working = False
+        self.savefile = savefile
 
     def TestFun(self):
         short_id = chr(65) + chr(65)
@@ -439,6 +440,9 @@ class ZIGBEE(communication_base):
         self.devices[dst_addr].run_forever()
         self.devices[short_id + b'\x01'] = self.devices[dst_addr]
         self.devices[dst_addr].event_report_proc("_Switch")
+
+
+
 
     @need_add_lock(factory_lock)
     def set_work_status(self, status):
@@ -549,13 +553,16 @@ class ZIGBEE(communication_base):
                     self.set_work_status(True)
                     self.task_obj.add_task(
                         'reset factory status', self.set_work_status, 1, 500, False)
-                    mac = ''.join(random.sample('0123456789abcdef', 3))
+                    #mac = ''.join(random.sample('0123456789abcdef', 6))
+                    mac = ''.join(random.sample('0123456789abcdefghijklmnopqrstuvwxyz', 6))
                     #mac = "AAA"
-                    short_id = chr(random.randint(0, 255)) + \
-                               chr(random.randint(0, 255))
+                    short_id = chr(random.randint(0, 255)) + chr(random.randint(0, 255))
                     #short_id = chr(65) + chr(65)
                     Endpoint = b'\x00'
                     dst_addr = short_id + Endpoint
+                    while dst_addr in self.devices:
+                        short_id = chr(random.randint(0, 255)) + chr(random.randint(0, 255))
+                        dst_addr = short_id + Endpoint
                     self.devices[dst_addr] = self.factory(
                         logger=self.LOG, mac=mac, short_id=short_id, Endpoint=Endpoint)
                     self.devices[dst_addr].sdk_obj = self
@@ -570,6 +577,9 @@ class ZIGBEE(communication_base):
                         logger=self.LOG, mac=mac, short_id=short_id, Endpoint=b'\x03')
                         self.devices[short_id + b'\x03'].sdk_obj = self
                         self.devices[short_id + b'\x03'].run_forever()
+                    #save to ini file
+                    save_zb_dev_file(short_id,save_file=self.savefile,dev_mac=mac,
+                                     server_addr=src_addr, dev_type=self.factory.__name__)
                     self.LOG.warn("It is time to create a new zigbee device, type: %s, mac: %s, dst_addr: 0x%s" % (
                         self.factory.__name__, mac, binascii.hexlify(dst_addr)))
                 else:
@@ -607,14 +617,28 @@ class ZIGBEE(communication_base):
             }
             # self.LOG.info("debug recv msg: " + self.convert_to_dictstr(datas))
             time.sleep(self.time_delay / 1000.0)
-            rsp_datas = self.devices[dst_addr].protocol_handler(datas)
+            rsp_datas = None
+            if bit_get(control, 7) and cmd == b'\x40\x34\x80\x01\x00':
+                self.devices[dst_addr].stop()
+                ep2 = dst_addr[0:2] + b'\x02'
+                if ep2 in self.devices:
+                    self.devices[ep2].stop()
+                ep3 = dst_addr[0:2] + b'\x03'
+                if ep3 in self.devices:
+                    self.devices[ep3].stop()
+                self.LOG.debug('Leave ACK msg!')
+            else:
+                rsp_datas = self.devices[dst_addr].protocol_handler(datas)
             rsp_msg = ''
             if rsp_datas:
                 if isinstance(rsp_datas, list):
                     for rsp in rsp_datas:
                         rsp_msg += self.msg_build(rsp)
+                        del_zb_dev_file(rsp,self.savefile)
                 else:
                     rsp_msg = self.msg_build(rsp_datas)
+                    del_zb_dev_file(rsp_datas, self.savefile)
+
             else:
                 rsp_msg = 'No_need_send'
             return rsp_msg
