@@ -336,9 +336,9 @@ class BaseZigbeeSim():
 
     def stop(self):
         self.need_stop = True
-        self.sdk_obj.stop()
-        if self.task_obj:
-            self.task_obj.stop()
+        #self.sdk_obj.stop()
+        #if self.task_obj:
+        #    self.task_obj.stop()
         self.LOG.warn('Thread %s stoped!' % (__name__))
 
     def run_forever(self):
@@ -2641,6 +2641,38 @@ class DoorLock(BaseZigbeeSim):
 
         else:
             pass
+
+
+def Load_zb_ini_file(zb_obj=None, loadfile=False, fileName=get_zb_save_dev_file()):
+    '''This function shoud used before zb_obj.run_forever()'''
+    if loadfile and zb_obj:
+        cf = ConfigParser.ConfigParser()
+        epArr = (b'\x00', b'\x01', b'\x02', b'\x03')
+        if cf.read(fileName):
+            for s in cf.sections():
+                short_id = chr(int(s[0:2], 16)) + chr(int(s[2:4], 16))
+                dev_type = cf.get(s, "dev_type")
+                dev_mac = cf.get(s, "dev_mac")
+                epCount = 1
+                zb_obj.set_device(eval(dev_type))
+                if (dev_type == "Switch"):
+                    epCount = 3
+                for i in range(0, epCount + 1):
+                    key = short_id + epArr[i]
+                    if (i == 1):
+                        key0 = short_id + epArr[0]
+                        zb_obj.devices[key] = zb_obj.devices[key0]
+                    else:
+                        zb_obj.devices[key] = zb_obj.factory(logger=zb_obj.LOG, mac=dev_mac,
+                                                             short_id=short_id, Endpoint=epArr[i])
+                        if(i==0):
+                            zb_obj.devices[key].addr = short_id + epArr[1]
+                        else:
+                            zb_obj.devices[key].addr = key
+                        zb_obj.devices[key].sdk_obj = zb_obj
+                        zb_obj.devices[key].run_forever()
+
+
 
 if __name__ == '__main__':
     pass
