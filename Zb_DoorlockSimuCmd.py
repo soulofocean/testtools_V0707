@@ -6,7 +6,7 @@ __author__ = 'ZengXu'
 __mtime__ = '2018-7-23'
 """
 from basic.BasicCommon import *
-from basic.BasicSimuCmd import BasicCmd,DoorLock
+from basic.BasicSimuCmd import BasicCmd,DoorLock,Load_zb_ini_file
 from basic.BasicProtocol import ZIGBEE
 import ConfigParser
 
@@ -35,7 +35,8 @@ if __name__ == '__main__':
         os.remove(logpath)
     LOG = MyLogger(logpath, clevel=cl_level, flevel=fl_level)
     cprint = cprint(__name__)
-    zigbee_obj = ZIGBEE(port, logger=LOG)
+    zigbee_obj = ZIGBEE(port, logger=LOG, savefile=True)
+    Load_zb_ini_file(zb_obj=zigbee_obj, loadfile=True)
     zigbee_obj.run_forever()
     zigbee_obj.set_device(eval("DoorLock"))
     cmd = DoorlockCmd(logger=LOG, cprint=cprint)

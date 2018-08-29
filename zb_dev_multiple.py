@@ -193,8 +193,10 @@ if __name__ == '__main__':
     sims = {}
     log_level = logging.DEBUG
 
+    useFile = True
     zigbee_obj = ZIGBEE(arg_handle.get_args('serial_port'),
-                        logger=LOG, time_delay=arg_handle.get_args('time_delay'))
+                        logger=LOG, time_delay=arg_handle.get_args('time_delay'),savefile=useFile)
+    Load_zb_ini_file(zb_obj=zigbee_obj, loadfile=useFile)
     zigbee_obj.run_forever()
     sys_proc()
     device_list = arg_handle.get_args('device_type')
