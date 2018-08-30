@@ -10,6 +10,7 @@ from abc import ABCMeta
 from BasicProtocol import *
 from cmd import Cmd
 from BasicCommon import *
+import time
 
 if sys.getdefaultencoding() != 'utf-8':
     reload(sys)
@@ -306,7 +307,7 @@ class BaseZigbeeSim():
         # state data:
         self.report_seq = b'\x01'
         self.task_obj = Task('common-task', self.LOG)
-        self.create_tasks()
+        #self.create_tasks()
 
     need_add_lock(status_lock)
     def set_item(self, item, value):
@@ -343,8 +344,8 @@ class BaseZigbeeSim():
 
     def run_forever(self):
         thread_list = []
-        thread_list.append([self.task_obj.task_proc])
-        thread_list.append([self.status_report_monitor])
+        #thread_list.append([self.task_obj.task_proc])
+        #thread_list.append([self.status_report_monitor])
         thread_list.append([self.reportAsHeartbeat])
         thread_ids = []
         for th in thread_list:
@@ -457,6 +458,19 @@ class Curtain(BaseZigbeeSim):
         self.cmd = b''
         self.addr = b''
 
+    def run_forever(self):
+        thread_list = []
+        thread_list.append([self.task_obj.task_proc])
+        #thread_list.append([self.status_report_monitor])
+        thread_list.append([self.reportAsHeartbeat])
+        thread_ids = []
+        for th in thread_list:
+            thread_ids.append(threading.Thread(target=th[0], args=th[1:]))
+
+        for th in thread_ids:
+            th.setDaemon(True)
+            th.start()
+
     def reportAsHeartbeat(self):
         while self.need_stop == False:
             if(self.addr == b''):
@@ -471,16 +485,13 @@ class Curtain(BaseZigbeeSim):
         if action == 'close':
             if self._percent_lift > 1:
                 self._percent_lift -= 10
-            else:
-                pass
         else:
             if self._percent_lift < 100:
                 if self._percent_lift == 91:
                     self._percent_lift =100
                 else:
                     self._percent_lift += 10
-            else:
-                pass
+        self.event_report_proc("_percent_lift")
 
     def get_cmd(self, cmd):
         cmds = {
@@ -619,6 +630,7 @@ class Curtain(BaseZigbeeSim):
                     self.task_obj.del_task('open')
                     self.set_item('_percent_lift', struct.unpack(
                         'B', datas['data'][:])[0])
+                    self.event_report_proc("_percent_lift")
 
                 else:
                     self.LOG.error(protocol_data_printB(
@@ -679,6 +691,7 @@ class Curtain(BaseZigbeeSim):
         else:
             pass
 
+'''
 class Led(BaseZigbeeSim):
     def __init__(self, logger, mac=b'123456', short_id=b'\x11\x11', Endpoint=b'\x01'):
         super(Led, self).__init__(logger=logger)
@@ -975,6 +988,8 @@ class Led(BaseZigbeeSim):
 
         else:
             pass
+'''
+
 
 class Switch(BaseZigbeeSim):
     def __init__(self, logger, mac=b'123456', short_id=b'\x11\x11', Endpoint=b'\x01'):
@@ -1106,9 +1121,11 @@ class Switch(BaseZigbeeSim):
             if datas['cmd'][1:1 + 2] == b'\x06\x00':
                 if datas['cmd'][3:3 + 2] == b'\x01\x00':
                     self.set_item('_Switch', b'\x01')
+                    self.event_report_proc("_Switch")
 
                 elif datas['cmd'][3:3 + 2] == b'\x00\x00':
                     self.set_item('_Switch', b'\x00')
+                    self.event_report_proc("_Switch")
 
                 else:
                     self.LOG.error(protocol_data_printB(
@@ -1344,10 +1361,13 @@ class Tube_lamp(BaseZigbeeSim):
             if datas['cmd'][1:1 + 2] == b'\x06\x00':
                 if datas['cmd'][3:3 + 2] == b'\x00\x00':
                     self.set_item('_Switch', b'\x00')
+                    self.event_report_proc("_Switch")
                 elif datas['cmd'][3:3 + 2] == b'\x01\x00':
                     self.set_item('_Switch', b'\x01')
+                    self.event_report_proc("_Switch")
                 else:
                     self.set_item('_Switch', b'\x02')
+                    self.event_report_proc("_Switch")
 
             elif datas['cmd'][1:1 + 2] == b'\x00\x03':
                 if datas['cmd'][3:3 + 2] == b'\x06\x00':
@@ -1357,16 +1377,17 @@ class Tube_lamp(BaseZigbeeSim):
                 elif datas['cmd'][3:3 + 2] == b'\x07\x00':
                     self.set_item('_Color_X', datas['data'][0:0 + 2])
                     self.set_item('_Color_Y', datas['data'][2:2 + 2])
-
+                    self.event_report_proc("_Color_X")
                 elif datas['cmd'][3:3 + 2] == b'\x0a\x00':
                     self.set_item('_Color_Temperature', datas['data'][0:0 + 2])
-
+                    self.event_report_proc("_Color_Temperature")
                 else:
                     self.LOG.error(protocol_data_printB(
                         datas['cmd'][3:3 + 2], title='Unknow cmd:'))
 
             elif datas['cmd'][1:1 + 2] == b'\x08\x00':
                 self.set_item('_Level', datas['data'][0:0 + 1])
+                self.event_report_proc("_Level")
 
             elif datas['cmd'][1:1 + 2] == b'\x02\x01':
                 if datas['cmd'][3:3 + 2] == b'\x00\x00':
@@ -1641,10 +1662,13 @@ class Shoot_lamp(BaseZigbeeSim):
             if datas['cmd'][1:1 + 2] == b'\x06\x00':
                 if datas['cmd'][3:3 + 2] == b'\x00\x00':
                     self.set_item('_Switch', b'\x00')
+                    self.event_report_proc("_Switch")
                 elif datas['cmd'][3:3 + 2] == b'\x01\x00':
                     self.set_item('_Switch', b'\x01')
+                    self.event_report_proc("_Switch")
                 else:
                     self.set_item('_Switch', b'\x02')
+                    self.event_report_proc("_Switch")
 
             elif datas['cmd'][1:1 + 2] == b'\x00\x03':
                 if datas['cmd'][3:3 + 2] == b'\x06\x00':
@@ -1654,9 +1678,10 @@ class Shoot_lamp(BaseZigbeeSim):
                 elif datas['cmd'][3:3 + 2] == b'\x07\x00':
                     self.set_item('_Color_X', datas['data'][0:0 + 2])
                     self.set_item('_Color_Y', datas['data'][2:2 + 2])
-
+                    self.event_report_proc("_Color_X")
                 elif datas['cmd'][3:3 + 2] == b'\x0a\x00':
                     self.set_item('_Color_Temperature', datas['data'][0:0 + 2])
+                    self.event_report_proc("_Color_Temperature")
 
                 else:
                     self.LOG.error(protocol_data_printB(
@@ -1664,7 +1689,7 @@ class Shoot_lamp(BaseZigbeeSim):
 
             elif datas['cmd'][1:1 + 2] == b'\x08\x00':
                 self.set_item('_Level', datas['data'][0:0 + 1])
-
+                self.event_report_proc("_Level")
             elif datas['cmd'][1:1 + 2] == b'\x02\x01':
                 if datas['cmd'][3:3 + 2] == b'\x00\x00':
                     self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
@@ -1939,10 +1964,13 @@ class Banded_lamp(BaseZigbeeSim):
             if datas['cmd'][1:1 + 2] == b'\x06\x00':
                 if datas['cmd'][3:3 + 2] == b'\x00\x00':
                     self.set_item('_Switch', b'\x00')
+                    self.event_report_proc("_Switch")
                 elif datas['cmd'][3:3 + 2] == b'\x01\x00':
                     self.set_item('_Switch', b'\x01')
+                    self.event_report_proc("_Switch")
                 else:
                     self.set_item('_Switch', b'\x02')
+                    self.event_report_proc("_Switch")
 
             elif datas['cmd'][1:1 + 2] == b'\x00\x03':
                 if datas['cmd'][3:3 + 2] == b'\x06\x00':
@@ -1952,9 +1980,10 @@ class Banded_lamp(BaseZigbeeSim):
                 elif datas['cmd'][3:3 + 2] == b'\x07\x00':
                     self.set_item('_Color_X', datas['data'][0:0 + 2])
                     self.set_item('_Color_Y', datas['data'][2:2 + 2])
-
+                    self.event_report_proc("_Color_X")
                 elif datas['cmd'][3:3 + 2] == b'\x0a\x00':
                     self.set_item('_Color_Temperature', datas['data'][0:0 + 2])
+                    self.event_report_proc("_Color_Temperature")
 
                 else:
                     self.LOG.error(protocol_data_printB(
@@ -1962,7 +1991,7 @@ class Banded_lamp(BaseZigbeeSim):
 
             elif datas['cmd'][1:1 + 2] == b'\x08\x00':
                 self.set_item('_Level', datas['data'][0:0 + 1])
-
+                self.event_report_proc("_Level")
             elif datas['cmd'][1:1 + 2] == b'\x02\x01':
                 if datas['cmd'][3:3 + 2] == b'\x00\x00':
                     self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
@@ -2236,10 +2265,13 @@ class Celling_lamp(BaseZigbeeSim):
             if datas['cmd'][1:1 + 2] == b'\x06\x00':
                 if datas['cmd'][3:3 + 2] == b'\x00\x00':
                     self.set_item('_Switch', b'\x00')
+                    self.event_report_proc("_Switch")
                 elif datas['cmd'][3:3 + 2] == b'\x01\x00':
                     self.set_item('_Switch', b'\x01')
+                    self.event_report_proc("_Switch")
                 else:
                     self.set_item('_Switch', b'\x02')
+                    self.event_report_proc("_Switch")
 
             elif datas['cmd'][1:1 + 2] == b'\x00\x03':
                 if datas['cmd'][3:3 + 2] == b'\x06\x00':
@@ -2249,9 +2281,10 @@ class Celling_lamp(BaseZigbeeSim):
                 elif datas['cmd'][3:3 + 2] == b'\x07\x00':
                     self.set_item('_Color_X', datas['data'][0:0 + 2])
                     self.set_item('_Color_Y', datas['data'][2:2 + 2])
-
+                    self.event_report_proc("_Color_X")
                 elif datas['cmd'][3:3 + 2] == b'\x0a\x00':
                     self.set_item('_Color_Temperature', datas['data'][0:0 + 2])
+                    self.event_report_proc("_Color_Temperature")
 
                 else:
                     self.LOG.error(protocol_data_printB(
@@ -2259,7 +2292,7 @@ class Celling_lamp(BaseZigbeeSim):
 
             elif datas['cmd'][1:1 + 2] == b'\x08\x00':
                 self.set_item('_Level', datas['data'][0:0 + 1])
-
+                self.event_report_proc("_Level")
             elif datas['cmd'][1:1 + 2] == b'\x02\x01':
                 if datas['cmd'][3:3 + 2] == b'\x00\x00':
                     self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
@@ -2390,6 +2423,11 @@ class DoorLock(BaseZigbeeSim):
                                                                             binascii.hexlify(self.addr)))
                 self.event_report_proc("_Lockstatus")
             time.sleep(self.reportbeat_interval)
+
+    def autoCloseDoor(self):
+        time.sleep(3)
+        self.set_item("_Lockstatus",b'\x01')
+        self.event_report_proc("_Lockstatus")
 
     def get_cmd(self, cmd):
         cmds = {
@@ -2539,10 +2577,13 @@ class DoorLock(BaseZigbeeSim):
                 rsp_data = self.get_cmd('Onoff Lock Response')
                 if datas['cmd'][3:3 + 2] == b'\x01\x00':
                     self.set_item('_Lockstatus', b'\x02')
-                    self.task_obj.add_task(
-                        'autoclosedoor', self.set_item, 1, 300, '_Lockstatus',b'\x01')
+                    self.event_report_proc("_Lockstatus")
+                    #self.task_obj.add_task(
+                    #    'autoclosedoor', self.set_item, 1, 300, '_Lockstatus',b'\x01')
+                    threading.Thread(target=self.autoCloseDoor).start()
                 elif datas['cmd'][3:3 + 2] == b'\x00\x00':
                     self.set_item('_Lockstatus', b'\x01')
+                    self.event_report_proc("_Lockstatus")
                 if rsp_data:
                     rsp_datas['cmd'] = rsp_data['cmd']
                     rsp_datas['data'] = rsp_data['data']
