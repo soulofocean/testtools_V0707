@@ -92,6 +92,7 @@ def save_zb_dev_file(dev_short_addr, save_file=False, server_addr = b'\x00\x00\x
         #cf.set(section,"server_addr",binascii.hexlify(server_addr)[0:4])
         cf.set(section, "dev_mac", dev_mac)
         cf.set(section, "dev_type", dev_type)
+        cf.set(section, "mac_desc", binascii.b2a_hex(dev_mac).upper()+"00"*(8-len(dev_mac)))
         with open(filename, "w+") as f:
             cf.write(f)
             f.close()
