@@ -15,11 +15,7 @@ coding = sys.getfilesystemencoding()
 # region const variates
 import ConfigParser
 cf = ConfigParser.ConfigParser()
-cf.read('wifi_devices.conf')
-rout_addr = (cf.get('Common','rout_addr'), 65381)
-cl_level = eval(cf.get('Common','cl_level'))
-fl_level = eval(cf.get('Common','fl_level'))
-rm_log = eval(cf.get('Common','rm_log'))
+
 
 class IPCCmd(BasicCmd):
     def __init__(self,rstp, logger, cprint):
@@ -300,6 +296,11 @@ def get_rstp_addr_dict():
     return rstp_dict
 
 if __name__ == '__main__':
+    cf.read('wifi_devices.conf')
+    rout_addr = (cf.get('Common', 'rout_addr'), 65381)
+    cl_level = eval(cf.get('Common', 'cl_level'))
+    fl_level = eval(cf.get('Common', 'fl_level'))
+    rm_log = eval(cf.get('Common', 'rm_log'))
     logpath = os.path.abspath(sys.argv[0]).replace('py', 'log').replace('exe', 'log')
     if rm_log and os.path.isfile(logpath):
         os.remove(logpath)
