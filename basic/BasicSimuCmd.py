@@ -94,6 +94,16 @@ class BasicCmd(Cmd):
         else:
             self.help_alarm()
 
+    def help_stop(self):
+        self.cprint.notice_p("stop device")
+    def do_stop(self,arg):
+        if self.sim_obj:
+            self.sim_obj.stop()
+            self.Log.warn("sim_obj stop!")
+        else:
+            self.Log.warn("sim_obj is None!")
+
+
 
 alarm_lock = threading.Lock()
 
@@ -155,6 +165,7 @@ class BaseWifiSim():
     def stop(self):
         self.need_stop = True
         self.sdk_obj.stop()
+        self.sdk_obj.connection_close()#.connection.close()
         if self.task_obj:
             self.task_obj.stop()
         self.LOG.warn('Thread %s stoped!' % (__name__))
