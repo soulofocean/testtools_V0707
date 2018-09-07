@@ -81,6 +81,9 @@ else:
 def get_zb_save_dev_file():
     return "zb_dev.ini"
 
+def format_mac(matchobj):
+    return matchobj.group(0) + ":"
+
 def save_zb_dev_file(dev_short_addr, save_file=False, server_addr = b'\x00\x00\x01', dev_mac="123456",
                      dev_type="Curtain", filename = get_zb_save_dev_file()):
     if save_file:
@@ -92,7 +95,10 @@ def save_zb_dev_file(dev_short_addr, save_file=False, server_addr = b'\x00\x00\x
         #cf.set(section,"server_addr",binascii.hexlify(server_addr)[0:4])
         cf.set(section, "dev_mac", dev_mac)
         cf.set(section, "dev_type", dev_type)
-        cf.set(section, "mac_desc", binascii.b2a_hex(dev_mac).upper()+"00"*(8-len(dev_mac)))
+        mac_tmp = binascii.b2a_hex(dev_mac).upper()+"00"*(8-len(dev_mac))
+        p = re.compile(r"(\w{2}(?=\w))")
+        mac_final = p.sub(format_mac, mac_tmp)
+        cf.set(section, "mac_desc", mac_final)
         with open(filename, "w+") as f:
             cf.write(f)
             f.close()
