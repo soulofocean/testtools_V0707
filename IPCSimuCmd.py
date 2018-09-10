@@ -31,7 +31,7 @@ class IPCCmd(BasicCmd):
 class IPC(BaseWifiSim):
     def __init__(self, logger, rstp_dict, mac='123456', time_delay=500, self_addr=None, addr=('192.168.10.1', 65381)):
         super(IPC, self).__init__(logger, addr=addr, mac=mac, time_delay=time_delay, self_addr=self_addr,
-                                  deviceCategory='ipc.main')
+                                  deviceCategory='ipc.main',manufacture="hikvision", deviceModel="CS-C2miniS-52WFR-HD")
         # self.LOG = logger
         # self.sdk_obj = Wifi(logger=logger, time_delay=time_delay,mac=mac, deviceCategory='water_filter.main', self_addr=self_addr)
         # self.sdk_obj.sim_obj = self
