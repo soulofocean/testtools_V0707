@@ -228,7 +228,7 @@ class Wifi(communication_base):
         self.deviceCategory = deviceCategory + \
                               '\x00' * (34 - len(deviceCategory))
         # 2:short subCategory; //subCategory: 1
-        self.subCategory = '\x01\x00'
+        self.subCategory = '\x00\x00'
         # char deviceModel[34];// device model: KFR-50LW/10CBB23AU1
         self.deviceModel = deviceModel + \
                            '\x00' * (34 - len(deviceModel))
