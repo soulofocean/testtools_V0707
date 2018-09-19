@@ -665,9 +665,10 @@ class Curtain(BaseZigbeeSim):
                     rsp_datas['data'] = rsp_data[b'\x02\x01']['data']
 
                 else:
-                    self.LOG.error("Fuck Read attribute response")
-                    rsp_datas['cmd'] = rsp_data['default']['cmd']
-                    rsp_datas['data'] = rsp_data['default']['data']
+                    self.LOG.error(protocol_data_printB(
+                        datas['cmd'], title='Fuck Read attribute response:'))
+                    #rsp_datas['cmd'] = rsp_data['default']['cmd']
+                    #rsp_datas['data'] = rsp_data['default']['data']
 
             else:
                 pass
@@ -1160,9 +1161,11 @@ class Switch(BaseZigbeeSim):
                     rsp_datas['data'] = rsp_data[b'\x06\x00']['data']
 
                 else:
-                    self.LOG.error("Fuck Read attribute response")
-                    rsp_datas['cmd'] = rsp_data['default']['cmd']
-                    rsp_datas['data'] = rsp_data['default']['data']
+                    self.LOG.error(protocol_data_printB(
+                        datas['cmd'], title='Fuck Read attribute response:'))
+                    #self.LOG.error("Fuck Read attribute response")
+                    #rsp_datas['cmd'] = rsp_data['default']['cmd']
+                    #rsp_datas['data'] = rsp_data['default']['data']
 
             else:
                 pass
@@ -1264,6 +1267,7 @@ class Tube_lamp(BaseZigbeeSim):
                     'cmd': b'\x01\x00\x03' + self.cmd[3:3 + 2],
                     'data': b'\x00' + b'\x21' + b'\x04' + self._Color_X + self._Color_Y,
                 },
+
                 'default': {
                     'cmd': b'\x01\x00\x00\x00\x00',
                     'data': b'\x00' + b'\x10' + b'\x01\x00',
@@ -1445,7 +1449,8 @@ class Tube_lamp(BaseZigbeeSim):
                     rsp_datas['data'] = rsp_data[b'\x00\x03']['data']
 
                 else:
-                    self.LOG.error("Fuck Read attribute response")
+                    self.LOG.error(protocol_data_printB(
+                        datas['cmd'], title='Fuck Read attribute response:'))
                     rsp_datas['cmd'] = rsp_data['default']['cmd']
                     rsp_datas['data'] = rsp_data['default']['data']
 
@@ -1525,6 +1530,8 @@ class Shoot_lamp(BaseZigbeeSim):
         self.seq = b'\x01'
         self.cmd = b''
         self.addr = b''
+
+
 
     def get_cmd(self, cmd):
         cmds = {
@@ -1746,7 +1753,8 @@ class Shoot_lamp(BaseZigbeeSim):
                     rsp_datas['data'] = rsp_data[b'\x00\x03']['data']
 
                 else:
-                    self.LOG.error("Fuck Read attribute response")
+                    self.LOG.error(protocol_data_printB(
+                        datas['cmd'], title='Fuck Read attribute response:'))
                     rsp_datas['cmd'] = rsp_data['default']['cmd']
                     rsp_datas['data'] = rsp_data['default']['data']
 
@@ -2048,7 +2056,8 @@ class Banded_lamp(BaseZigbeeSim):
                     rsp_datas['data'] = rsp_data[b'\x00\x03']['data']
 
                 else:
-                    self.LOG.error("Fuck Read attribute response")
+                    self.LOG.error(protocol_data_printB(
+                        datas['cmd'], title='Fuck Read attribute response:'))
                     rsp_datas['cmd'] = rsp_data['default']['cmd']
                     rsp_datas['data'] = rsp_data['default']['data']
 
@@ -2349,7 +2358,8 @@ class Celling_lamp(BaseZigbeeSim):
                     rsp_datas['data'] = rsp_data[b'\x00\x03']['data']
 
                 else:
-                    self.LOG.error("Fuck Read attribute response")
+                    self.LOG.error(protocol_data_printB(
+                        datas['cmd'], title='Fuck Read attribute response:'))
                     rsp_datas['cmd'] = rsp_data['default']['cmd']
                     rsp_datas['data'] = rsp_data['default']['data']
 
@@ -2439,6 +2449,8 @@ class DoorLock(BaseZigbeeSim):
         time.sleep(3)
         self.set_item("_Lockstatus",b'\x01')
         self.event_report_proc("_Lockstatus")
+
+
 
     def get_cmd(self, cmd):
         cmds = {
@@ -2647,7 +2659,8 @@ class DoorLock(BaseZigbeeSim):
                     rsp_datas['data'] = rsp_data[b'\x01\x01\x82\x00']['data']
 
                 else:
-                    self.LOG.error("Fuck Read attribute response")
+                    self.LOG.error(protocol_data_printB(
+                        datas['cmd'], title='Fuck Read attribute response:'))
                     rsp_datas['cmd'] = rsp_data['default']['cmd']
                     rsp_datas['data'] = rsp_data['default']['data']
 
