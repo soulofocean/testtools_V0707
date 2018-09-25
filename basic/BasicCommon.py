@@ -464,11 +464,21 @@ class Task():
                 self.lock.release()
                 time.sleep(0.01)
 
-            except RuntimeError:
-                pass
+            #except RuntimeError:
+            #    pass
+            except Exception:
+                self.LOG.critical(traceback.format_exc())
 
-
+import traceback
 if __name__ == '__main__':
+    try:
+        a = 1/0
+    except RuntimeError as a:
+        pass
+    except Exception:
+        aaa = traceback.format_exc()
+        print aaa
+    sys.exit(-666)
     lk = threading.RLock()
     def add_T(func, runtime=1, interval=2, *args):
         for i in range(0, runtime):
