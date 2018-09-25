@@ -464,8 +464,8 @@ class Task():
                 self.lock.release()
                 time.sleep(0.01)
 
-            #except RuntimeError:
-            #    pass
+            except RuntimeError:
+                self.LOG.error(traceback.format_exc())
             except Exception:
                 self.LOG.critical(traceback.format_exc())
 
@@ -473,8 +473,8 @@ import traceback
 if __name__ == '__main__':
     try:
         a = 1/0
-    except RuntimeError as a:
-        pass
+    except ZeroDivisionError as a:
+        print a
     except Exception:
         aaa = traceback.format_exc()
         print aaa
