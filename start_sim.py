@@ -14,11 +14,11 @@ import time
 import random
 Dict_sim =\
     {
-        'air': 3,
-        'hanger':3,
-        'waterfilter':3,
-        'airfilter':3,
-        'washer':3
+        'air': 1,
+        'hanger':1,
+        'waterfilter':1,
+        'airfilter':1,
+        'washer':1
     }
 rout_addr = "192.168.10.1"
 
