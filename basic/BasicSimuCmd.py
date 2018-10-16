@@ -128,6 +128,8 @@ class BaseWifiSim():
         self.alarm_dict = defaultdict(dict)
         self.attr_dict = defaultdict(dict)  # add by zx 20180524
 
+        self.LOG.warn("Dev mac:%s" % mac)
+
     @need_add_lock(status_lock)
     def set_item(self, item, value):
         if item in self.__dict__:
