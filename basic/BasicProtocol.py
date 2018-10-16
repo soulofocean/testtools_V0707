@@ -362,11 +362,11 @@ class Wifi(communication_base):
     def connection_setup(self):
         self.LOG.warn('Try to connect %s...' % str(self.addr))
         if self.connection.get_connected():
-            self.LOG.info('Connection already setup!')
+            self.LOG.warn('Connection already setup!')
             return True
         elif self.connection.connect():
             self.set_connection_state(True)
-            self.LOG.info('Connection setup success!')
+            self.LOG.warn('Connection setup success!')
             return True
         else:
             self.LOG.warn("Can't connect %s!" % str(self.addr))
@@ -458,7 +458,7 @@ class ZIGBEE(communication_base):
 
     def set_device(self, factory):
         self.factory = factory
-        self.LOG.info("Set factory: %s success!" % (factory.__name__))
+        self.LOG.warn("Set factory: %s success!" % (factory.__name__))
 
     def msg_build(self, datas):
         if len(datas) < 6:
@@ -651,11 +651,11 @@ class ZIGBEE(communication_base):
     def connection_setup(self):
         self.LOG.warn('Try to open port %s...' % (self.port))
         if self.connection.is_open():
-            self.LOG.info('Connection already setup!')
+            self.LOG.warn('Connection already setup!')
             return True
         elif self.connection.open():
             self.set_connection_state('online')
-            self.LOG.info('Setup connection success!')
+            self.LOG.warn('Setup connection success!')
             return True
         else:
             self.LOG.warn(self.port + " can't open!")
