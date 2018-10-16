@@ -63,6 +63,8 @@ class Washer(BaseWifiSim):
         self._drying_duration = 15  #
         self._switch = "on"  #
 
+    #def __str__(self):
+        #return "DevType:{0} DevMac:{1}".format(self.__module__,self.sdk_obj.mac)
     def status_maintain(self):
         if self._status == 'run':
             if self._time_left > 0:
