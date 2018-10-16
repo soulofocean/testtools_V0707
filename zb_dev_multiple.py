@@ -176,10 +176,13 @@ def sys_init():
 def sys_cleanup():
     LOG.info("Goodbye!!!")
 
+rm_log = True
 
 if __name__ == '__main__':
-    LOG = MyLogger(os.path.abspath(sys.argv[0]).replace('py', 'log').replace('exe','log'), clevel=logging.INFO,
-                   rlevel=logging.WARN)
+    logpath = os.path.abspath(sys.argv[0]).replace('py', 'log').replace('exe','log')
+    if rm_log and os.path.isfile(logpath) and os.path.exists(logpath):
+        os.remove(logpath)
+    LOG = MyLogger(logpath, clevel=logging.WARN,rlevel=logging.WARN)
     cprint = cprint(__name__)
 
     sys_init()
