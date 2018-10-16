@@ -14,11 +14,11 @@ import time
 import random
 Dict_sim =\
     {
-        'air': 1,
-        'hanger':1,
-        'waterfilter':1,
-        'airfilter':1,
-        'washer':1
+        'air': 3,
+        'hanger':3,
+        'waterfilter':3,
+        'airfilter':3,
+        'washer':3
     }
 rout_addr = "192.168.10.1"
 
@@ -26,7 +26,8 @@ device_online_list=[]
 mac_sample_str="1234567890abcdef"
 Sim=''
 useRandomMac = False
-
+manu = False
+rm_log = True
 def start_sim():
     totalcount = 0
     for cnt in Dict_sim.values():
@@ -50,6 +51,8 @@ def start_sim():
                 sim = Sim(logger=Log, mac=macTmp, addr=(rout_addr, 65381), time_delay=500)
                 sim.run_forever()
                 device_online_list.append(sim)
+                if manu:
+                    raw_input("Press any key to continue")
         elif sim_name == 'hanger':
             for i in range(0,sim_cnt):
                 if useRandomMac:
@@ -61,6 +64,8 @@ def start_sim():
                 sim = Sim(logger=Log, mac=macTmp, addr=(rout_addr, 65381), time_delay=500)
                 sim.run_forever()
                 device_online_list.append(sim)
+                if manu:
+                    raw_input("Press any key to continue")
         elif sim_name == 'waterfilter':
             for i in range(0,sim_cnt):
                 if useRandomMac:
@@ -72,6 +77,8 @@ def start_sim():
                 sim = Sim(logger=Log, mac=macTmp, addr=(rout_addr, 65381), time_delay=500)
                 sim.run_forever()
                 device_online_list.append(sim)
+                if manu:
+                    raw_input("Press any key to continue")
         elif sim_name == 'airfilter':
             for i in range(0,sim_cnt):
                 if useRandomMac:
@@ -83,6 +90,8 @@ def start_sim():
                 sim = Sim(logger=Log, mac=macTmp, addr=(rout_addr, 65381), time_delay=500)
                 sim.run_forever()
                 device_online_list.append(sim)
+                if manu:
+                    raw_input("Press any key to continue")
         elif sim_name == 'washer':
             for i in range(0,sim_cnt):
                 if useRandomMac:
@@ -93,12 +102,20 @@ def start_sim():
                 Sim = Washer
                 sim = Sim(logger=Log, mac=macTmp, addr=(rout_addr, 65381), time_delay=500)
                 sim.run_forever()
+                device_online_list.append(sim)
+                if manu:
+                    raw_input("Press any key to continue")
 
 def hold_on():
     while True:
         time.sleep(1)
 
 if __name__ =='__main__':
+    logpath = "log"
+    if rm_log and os.path.exists(logpath):
+        for f in os.listdir(logpath):
+            if ".log" in f and os.path.isfile(path=join(logpath,f)):
+                os.remove(join(logpath,f))
     start_sim()
     #os.system('python zb_dev_multiple.py')
     hold_on()
