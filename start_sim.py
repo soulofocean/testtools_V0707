@@ -26,9 +26,8 @@ device_online_list=[]
 mac_sample_str="1234567890abcdef"
 Sim=''
 useRandomMac = False
-manu = False
 rm_log = True
-def start_sim():
+def start_sim(manu = False):
     totalcount = 0
     for cnt in Dict_sim.values():
         totalcount += cnt
@@ -116,7 +115,9 @@ if __name__ =='__main__':
         for f in os.listdir(logpath):
             if ".log" in f and os.path.isfile(path=join(logpath,f)):
                 os.remove(join(logpath,f))
-    start_sim()
+
+    manu = "manu" in sys.argv
+    start_sim(manu)
     #os.system('python zb_dev_multiple.py')
     hold_on()
 
