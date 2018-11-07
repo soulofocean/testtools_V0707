@@ -42,9 +42,9 @@ def start_sim(manu = False):
         if sim_name == 'air':
             for i in range(0,sim_cnt):
                 if useRandomMac:
-                    macTmp = ''.join(random.sample(mac_sample_str, 6))
+                    macTmp = ''.join(random.sample(mac_sample_str, 12))
                 else:
-                    macTmp = ("010%03d" % (i,))
+                    macTmp = ("010%09d" % (i,))
                 Log = MyLogger(join('log','%s%s.log' % (sim_name,i)), clevel=clevel, rlevel=rlevel)
                 Sim = Air
                 sim = Sim(logger=Log, mac=macTmp, addr=(rout_addr, 65381), time_delay=500)
@@ -55,9 +55,9 @@ def start_sim(manu = False):
         elif sim_name == 'hanger':
             for i in range(0,sim_cnt):
                 if useRandomMac:
-                    macTmp = ''.join(random.sample(mac_sample_str, 6))
+                    macTmp = ''.join(random.sample(mac_sample_str, 12))
                 else:
-                    macTmp = ("020%03d" % (i,))
+                    macTmp = ("020%09d" % (i,))
                 Log = MyLogger(join('log', '%s%s.log' % (sim_name, i)), clevel=clevel, rlevel=rlevel)
                 Sim = Hanger
                 sim = Sim(logger=Log, mac=macTmp, addr=(rout_addr, 65381), time_delay=500)
@@ -68,9 +68,9 @@ def start_sim(manu = False):
         elif sim_name == 'waterfilter':
             for i in range(0,sim_cnt):
                 if useRandomMac:
-                    macTmp = ''.join(random.sample(mac_sample_str, 6))
+                    macTmp = ''.join(random.sample(mac_sample_str, 12))
                 else:
-                    macTmp = ("030%03d" % (i,))
+                    macTmp = ("030%09d" % (i,))
                 Log = MyLogger(join('log', '%s%s.log' % (sim_name, i)), clevel=clevel, rlevel=rlevel)
                 Sim = Waterfilter
                 sim = Sim(logger=Log, mac=macTmp, addr=(rout_addr, 65381), time_delay=500)
@@ -81,9 +81,9 @@ def start_sim(manu = False):
         elif sim_name == 'airfilter':
             for i in range(0,sim_cnt):
                 if useRandomMac:
-                    macTmp = ''.join(random.sample(mac_sample_str, 6))
+                    macTmp = ''.join(random.sample(mac_sample_str, 12))
                 else:
-                    macTmp = ("040%03d" % (i,))
+                    macTmp = ("040%09d" % (i,))
                 Log = MyLogger(join('log', '%s%s.log' % (sim_name, i)), clevel=clevel, rlevel=rlevel)
                 Sim = AirFilter
                 sim = Sim(logger=Log, mac=macTmp, addr=(rout_addr, 65381), time_delay=500)
@@ -94,9 +94,9 @@ def start_sim(manu = False):
         elif sim_name == 'washer':
             for i in range(0,sim_cnt):
                 if useRandomMac:
-                    macTmp = ''.join(random.sample(mac_sample_str, 6))
+                    macTmp = ''.join(random.sample(mac_sample_str, 12))
                 else:
-                    macTmp = ("050%03d" % (i,))
+                    macTmp = ("050%09d" % (i,))
                 Log = MyLogger(join('log', '%s%s.log' % (sim_name, i)), clevel=clevel, rlevel=rlevel)
                 Sim = Washer
                 sim = Sim(logger=Log, mac=macTmp, addr=(rout_addr, 65381), time_delay=500)
